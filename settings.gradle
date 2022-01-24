@@ -1,0 +1,2 @@
+rootProject.name = 'certificatesProject'
+include('web', 'service', 'repository', 'model')
