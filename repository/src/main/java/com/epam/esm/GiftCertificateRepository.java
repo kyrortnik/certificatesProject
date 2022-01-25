@@ -7,10 +7,10 @@ public interface GiftCertificateRepository {
     GiftCertificate getOne(Long id);
 
 
-    public void delete(Long id);
+    public boolean delete(Long id);
 
 
-    public void update(GiftCertificate element);
+    public boolean update(GiftCertificate element, Long id);
 
 
     public GiftCertificate create(GiftCertificate element);

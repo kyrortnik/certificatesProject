@@ -2,6 +2,7 @@ package com.epam.esm;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,18 +17,21 @@ public class CertificateService implements CRUDService<GiftCertificate> {
     }
 
     @Override
-    public void delete(Long id) {
+    public boolean delete(Long id) {
+
+        return repository.delete(id);
 
     }
 
     @Override
-    public void update(GiftCertificate element) {
+    public boolean update(GiftCertificate element, Long id) {
+        return repository.update(element, id);
 
     }
 
     @Override
     public GiftCertificate create(GiftCertificate giftCertificate) {
-        return  repository.create(giftCertificate);
+        return repository.create(giftCertificate);
     }
 
 }

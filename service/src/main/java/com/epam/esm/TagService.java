@@ -11,13 +11,15 @@ public class TagService implements CRUDService<Tag> {
     }
 
     @Override
-    public void delete(Long id) {
+    public boolean delete(Long id) {
 
+        return false;
     }
 
     @Override
-    public void update(Tag element) {
+    public boolean update(Tag element, Long id) {
 
+        return false;
     }
 
     @Override
