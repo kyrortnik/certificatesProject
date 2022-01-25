@@ -1,6 +1,7 @@
 package com.epam.esm;
 
 public class CustomError {
+
     private final String message;
     private final int code;
 

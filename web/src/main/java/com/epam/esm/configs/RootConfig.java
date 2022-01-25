@@ -17,21 +17,21 @@ import javax.sql.DataSource;
         })
 public class RootConfig {
 
-        @Bean
-        public BasicDataSource dataSource() {
-                BasicDataSource ds = new BasicDataSource();
-                ds.setDriverClassName("org.postgresql.Driver");
-                ds.setUrl("jdbc:postgresql://localhost/epam-lab");
-                ds.setUsername("postgres");
-                ds.setPassword("admin");
-                ds.setInitialSize(5);
-                ds.setMaxActive(10);
-                return ds;
+    @Bean
+    public BasicDataSource dataSource() {
+        BasicDataSource ds = new BasicDataSource();
+        ds.setDriverClassName("org.postgresql.Driver");
+        ds.setUrl("jdbc:postgresql://localhost/epam-lab");
+        ds.setUsername("postgres");
+        ds.setPassword("admin");
+        ds.setInitialSize(5);
+        ds.setMaxActive(10);
+        return ds;
 
-        }
+    }
 
-        @Bean
-        public JdbcTemplate jdbcTemplate(DataSource dataSource) {
-                return new JdbcTemplate(dataSource);
-        }
+    @Bean
+    public JdbcTemplate jdbcTemplate(DataSource dataSource) {
+        return new JdbcTemplate(dataSource);
+    }
 }

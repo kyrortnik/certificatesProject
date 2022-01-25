@@ -47,15 +47,15 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
     }
 
     @Override
-    public boolean delete(Long id) {
+    public void delete(Long id) {
 
-        return jdbcOperations.update(DELETE_CERTIFICATE, id) > 0;
+        jdbcOperations.update(DELETE_CERTIFICATE, id);
 
     }
 
     @Override
     public boolean update(GiftCertificate giftCertificate, Long id) {
-        Object[] array = new Object[]{
+       /* Object[] array = new Object[]{
                 giftCertificate.getId(),
                 giftCertificate.getName(),
                 giftCertificate.getDescription(),
@@ -63,8 +63,9 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
                 giftCertificate.getDuration(),
                 giftCertificate.getCreateDate(),
                 giftCertificate.getLastUpdateDate(),
-                id};
-        return jdbcOperations.update(UPDATE_CERTIFICATE, array) > 0;
+                id};*/
+        return jdbcOperations.update(UPDATE_CERTIFICATE, MAPPER_GIFT_CERTIFICATE) > 0;
+//        return jdbcOperations.query(UPDATE_CERTIFICATE,rs -> rs.next() ? MAPPER_GIFT_CERTIFICATE.mapRow(rs,1): null, id) ;
 
     }
 

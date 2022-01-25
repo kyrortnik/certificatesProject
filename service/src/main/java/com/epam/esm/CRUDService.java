@@ -6,7 +6,7 @@ public interface CRUDService<E> {
 
     E getOne(Long id);
 
-    boolean delete(Long id);
+    void delete(Long id);
 
     boolean update(E element, Long id);
 

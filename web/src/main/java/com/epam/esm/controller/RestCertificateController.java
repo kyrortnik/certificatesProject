@@ -4,11 +4,16 @@ import com.epam.esm.CRUDService;
 import com.epam.esm.CertificateService;
 import com.epam.esm.CustomError;
 import com.epam.esm.GiftCertificate;
+import com.epam.esm.exception.GiftCertificateNotFoundException;
+import com.fasterxml.jackson.core.JsonParseException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -24,47 +29,76 @@ public class RestCertificateController {
     }
 
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable Long id) {
+    /**
+     * @GetMapping("/") getList()
+     */
 
+ /*   @GetMapping("/")
+    public ResponseEntity<?> getList() {
+        List<GiftCertificate> certificates = service.getList();
+    }*/
+    @GetMapping("/{id}")
+    public GiftCertificate get(@PathVariable Long id) {
         GiftCertificate giftCertificate = service.getOne(id);
         if (giftCertificate == null) {
-            CustomError error = new CustomError(123, "error message");
-            return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+            throw new GiftCertificateNotFoundException(id);
         }
-        return new ResponseEntity<>(giftCertificate, HttpStatus.OK);
+        return giftCertificate;
     }
 
-    /*
-     * TODO negative scenarios
-     * */
+
     @PostMapping(path = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GiftCertificate> create(@RequestBody GiftCertificate giftCertificate) {
-        GiftCertificate createsGiftCertificate = service.create(giftCertificate);
-        if (createsGiftCertificate != null) {
-
-            return new ResponseEntity<>(createsGiftCertificate, HttpStatus.CREATED);
-
-        } else {
-            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+    public GiftCertificate create(@RequestBody GiftCertificate giftCertificate) {
+        GiftCertificate createdGiftCertificate = service.create(giftCertificate);
+        if (createdGiftCertificate == null) {
+            throw  new DuplicateKeyException("");
         }
+        return createdGiftCertificate;
     }
 
 
-    /*@DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         service.delete(id);
-        return new ResponseEntity<Object>();
-    }*/
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 
-   /* @PutMapping(value = "/{id}",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GiftCertificate> update(@RequestBody GiftCertificate giftCertificate, @PathVariable Long id) {
-        service.update(giftCertificate, id);
-    }*/
+
+    //TODO refactor to PATCH
+    @PutMapping(value = "/{id}",
+            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> update(@RequestBody GiftCertificate giftCertificate, @PathVariable Long id) {
+        if (service.update(giftCertificate, id)) {
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            CustomError error = new CustomError(getErrorCode(400), "Error while updating");
+            return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
+        }
+
+    }
+
+
+    @ExceptionHandler(GiftCertificateNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public CustomError certificateNotFound(GiftCertificateNotFoundException e) {
+        long certificateId = e.getCertificateId();
+        return new CustomError(getErrorCode(404), "Gift Certificate [" + certificateId + "] not found");
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public CustomError duplicateKeyValues(DuplicateKeyException e) {
+        return new CustomError(getErrorCode(500), e.getCause().getMessage());
+    }
+
+
+    private static int getErrorCode(int errorCode) {
+        long counter = 0;
+        counter++;
+        return Integer.parseInt(errorCode + String.valueOf(counter));
+
+    }
 
 }
