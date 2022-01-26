@@ -1,5 +1,6 @@
 package com.epam.esm;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -7,14 +8,18 @@ import java.util.List;
 @Service
 public class TagService implements CRUDService<Tag> {
 
+    @Autowired
+    private TagRepository repository;
+
     @Override
     public Tag getOne(Long id) {
-        return null;
+        return repository.getOne(id);
     }
 
     @Override
     public List<Tag> getAll(String order, int max) {
-        return null;
+
+        return repository.getAll(order,max);
     }
 
     @Override

@@ -19,7 +19,7 @@ public class CertificateService implements CRUDService<GiftCertificate> {
 
     @Override
     public List<GiftCertificate> getAll(String order, int max) {
-       return repository.getCertificates(order,max);
+        return repository.getCertificates(order, max);
     }
 
     @Override
@@ -38,4 +38,8 @@ public class CertificateService implements CRUDService<GiftCertificate> {
         return repository.create(giftCertificate);
     }
 
+
+    public List<GiftCertificate> getAllWithParams(String order, int max, String tag, String pattern){
+      return  repository.getAllWithParams(order, max, tag, pattern);
+    }
 }

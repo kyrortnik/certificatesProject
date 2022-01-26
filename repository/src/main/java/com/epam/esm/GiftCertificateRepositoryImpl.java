@@ -22,6 +22,13 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
             "WHERE id = ?;";
 
     private static final String GET_ALL_CERTIFICATES = "SELECT id, name,description, price, duration, create_date, last_update_date FROM certificates ORDER BY name %s LIMIT ?";
+
+
+    private static final String GET_CERTIFICATES_WITH_PARAMS =
+            "SELECT  cert.id,  cert.name,  cert.description,  cert.price,  cert.duration,  cert.create_date,  cert.last_update_date, tags.id, tags.name FROM certificates AS cert\n" +
+                    "LEFT OUTER JOIN certificates_tags  AS ct ON cert.id =  ct.certificate_id\n" +
+                    "LEFT OUTER JOIN tags ON ct.tag_id = tags.id WHERE tags.name = ? AND cert.name LIKE ? OR cert.description LIKE ? ORDER BY cert.name %s LIMIT ?";
+
     private final JdbcOperations jdbcOperations;
 
 
@@ -50,6 +57,20 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
         return jdbcOperations.query(FIND_ONE, rs -> rs.next() ? MAPPER_GIFT_CERTIFICATE.mapRow(rs, 1) : null, id);
     }
 
+
+    @Override
+    public List<GiftCertificate> getCertificates(String order, int max) {
+
+
+        return jdbcOperations.query(String.format(GET_ALL_CERTIFICATES, order), MAPPER_GIFT_CERTIFICATE, max);
+
+    }
+
+    @Override
+    public List<GiftCertificate> getAllWithParams(String order, int max, String tag, String pattern) {
+        return jdbcOperations.query(String.format(GET_CERTIFICATES_WITH_PARAMS, order), MAPPER_GIFT_CERTIFICATE, tag, pattern, pattern, max);
+    }
+
     @Override
     public void delete(Long id) {
 
@@ -60,20 +81,12 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
     @Override
     public boolean update(GiftCertificate giftCertificate, Long id) {
 
-        return true;
 
-
-//        return jdbcOperations.update(UPDATE_CERTIFICATE, MAPPER_GIFT_CERTIFICATE) > 0;
+        return jdbcOperations.update(UPDATE_CERTIFICATE, MAPPER_GIFT_CERTIFICATE) > 0;
 
     }
 
-    @Override
-    public List<GiftCertificate> getCertificates(String order, int max) {
 
-        return jdbcOperations.query(String.format(GET_ALL_CERTIFICATES, order), MAPPER_GIFT_CERTIFICATE, max);
-
-
-    }
 
     @Override
     public GiftCertificate create(GiftCertificate giftCertificate) {

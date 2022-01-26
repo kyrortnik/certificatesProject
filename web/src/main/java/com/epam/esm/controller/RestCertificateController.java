@@ -1,6 +1,5 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.CRUDService;
 import com.epam.esm.CertificateService;
 import com.epam.esm.CustomError;
 import com.epam.esm.GiftCertificate;
@@ -14,7 +13,6 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Field;
-import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Map;
 
@@ -24,9 +22,10 @@ import java.util.Map;
 public class RestCertificateController {
 
     private static final String MAX_CERTIFICATES_IN_REQUEST = "20";
+    private static final String DEFAULT_ORDER = "ASC";
 
 
-    private final CRUDService<GiftCertificate> service;
+    private final CertificateService service;
 
     @Autowired
     public RestCertificateController(CertificateService service) {
@@ -34,13 +33,6 @@ public class RestCertificateController {
     }
 
 
-
-    @GetMapping("/")
-    public List<GiftCertificate> getCertificates(
-            @RequestParam(value ="order", defaultValue = "ASC") String order,
-            @RequestParam(value = "max", defaultValue = MAX_CERTIFICATES_IN_REQUEST) int max ) {
-        return service.getAll(order,max);
-    }
     @GetMapping("/{id}")
     public GiftCertificate getOne(@PathVariable Long id) {
         GiftCertificate giftCertificate = service.getOne(id);
@@ -48,6 +40,16 @@ public class RestCertificateController {
             throw new GiftCertificateNotFoundException(id);
         }
         return giftCertificate;
+    }
+
+    //TODO test this method
+    @GetMapping("/")
+    public List<GiftCertificate> getCertificates(
+            @RequestParam(value = "order", defaultValue = DEFAULT_ORDER) String order,
+            @RequestParam(value = "max", defaultValue = MAX_CERTIFICATES_IN_REQUEST) int max,
+            @RequestParam(value = "tag", required = false) String tag,
+            @RequestParam(value = "pattern", required = false) String pattern) {
+        return service.getAllWithParams(order, max, tag, pattern);
     }
 
 
@@ -68,8 +70,7 @@ public class RestCertificateController {
         service.delete(id);
     }
 
-
-
+    //TODO @Deprecated
     @PutMapping(value = "/{id}",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> update(@RequestBody GiftCertificate giftCertificate, @PathVariable Long id) {
@@ -83,7 +84,7 @@ public class RestCertificateController {
     }
 
 
-//TODO replace reflection
+    //TODO replace reflection
     @PatchMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> update(@RequestBody Map<Object, Object> fields, @PathVariable Long id) {
         GiftCertificate certificate = service.getOne(id);
@@ -94,8 +95,7 @@ public class RestCertificateController {
                 ReflectionUtils.setField(field, certificate, value);
             });
             return new ResponseEntity<>(certificate, HttpStatus.OK);
-        }
-        else {
+        } else {
             CustomError error = new CustomError(getErrorCode(400), "Error while patching");
             return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
         }
@@ -121,7 +121,6 @@ public class RestCertificateController {
         long counter = 0;
         counter++;
         return Integer.parseInt(errorCode + String.valueOf(counter));
-
     }
 
 }
