@@ -2,11 +2,18 @@ package com.epam.esm;
 
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class TagService implements CRUDService<Tag> {
 
     @Override
     public Tag getOne(Long id) {
+        return null;
+    }
+
+    @Override
+    public List<Tag> getAll(String order, int max) {
         return null;
     }
 

@@ -5,20 +5,25 @@ import com.epam.esm.CertificateService;
 import com.epam.esm.CustomError;
 import com.epam.esm.GiftCertificate;
 import com.epam.esm.exception.GiftCertificateNotFoundException;
-import com.fasterxml.jackson.core.JsonParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Field;
+import java.security.cert.Certificate;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
 @RequestMapping(value = "api/certificates", produces = MediaType.APPLICATION_JSON_VALUE)
 public class RestCertificateController {
+
+    private static final String MAX_CERTIFICATES_IN_REQUEST = "20";
 
 
     private final CRUDService<GiftCertificate> service;
@@ -29,16 +34,15 @@ public class RestCertificateController {
     }
 
 
-    /**
-     * @GetMapping("/") getList()
-     */
 
- /*   @GetMapping("/")
-    public ResponseEntity<?> getList() {
-        List<GiftCertificate> certificates = service.getList();
-    }*/
+    @GetMapping("/")
+    public List<GiftCertificate> getCertificates(
+            @RequestParam(value ="order", defaultValue = "ASC") String order,
+            @RequestParam(value = "max", defaultValue = MAX_CERTIFICATES_IN_REQUEST) int max ) {
+        return service.getAll(order,max);
+    }
     @GetMapping("/{id}")
-    public GiftCertificate get(@PathVariable Long id) {
+    public GiftCertificate getOne(@PathVariable Long id) {
         GiftCertificate giftCertificate = service.getOne(id);
         if (giftCertificate == null) {
             throw new GiftCertificateNotFoundException(id);
@@ -48,25 +52,24 @@ public class RestCertificateController {
 
 
     @PostMapping(path = "/",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
+            consumes = MediaType.APPLICATION_JSON_VALUE)
     public GiftCertificate create(@RequestBody GiftCertificate giftCertificate) {
         GiftCertificate createdGiftCertificate = service.create(giftCertificate);
         if (createdGiftCertificate == null) {
-            throw  new DuplicateKeyException("");
+            throw new DuplicateKeyException("");
         }
         return createdGiftCertificate;
     }
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
         service.delete(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
 
-    //TODO refactor to PATCH
+
     @PutMapping(value = "/{id}",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> update(@RequestBody GiftCertificate giftCertificate, @PathVariable Long id) {
@@ -74,6 +77,26 @@ public class RestCertificateController {
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
             CustomError error = new CustomError(getErrorCode(400), "Error while updating");
+            return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
+        }
+
+    }
+
+
+//TODO replace reflection
+    @PatchMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> update(@RequestBody Map<Object, Object> fields, @PathVariable Long id) {
+        GiftCertificate certificate = service.getOne(id);
+        if (certificate != null) {
+            fields.forEach((key, value) -> {
+                Field field = ReflectionUtils.findField(GiftCertificate.class, (String) key);
+                field.setAccessible(true);
+                ReflectionUtils.setField(field, certificate, value);
+            });
+            return new ResponseEntity<>(certificate, HttpStatus.OK);
+        }
+        else {
+            CustomError error = new CustomError(getErrorCode(400), "Error while patching");
             return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
         }
 

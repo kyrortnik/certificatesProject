@@ -2,8 +2,9 @@ package com.epam.esm;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class CertificateService implements CRUDService<GiftCertificate> {
@@ -17,10 +18,13 @@ public class CertificateService implements CRUDService<GiftCertificate> {
     }
 
     @Override
+    public List<GiftCertificate> getAll(String order, int max) {
+       return repository.getCertificates(order,max);
+    }
+
+    @Override
     public void delete(Long id) {
-
         repository.delete(id);
-
     }
 
     @Override

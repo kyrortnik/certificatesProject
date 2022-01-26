@@ -2,6 +2,8 @@ package com.epam.esm;
 
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class GiftCertificate {
 
@@ -18,6 +20,8 @@ public class GiftCertificate {
     private String createDate;
 
     private String lastUpdateDate;
+
+    private List<Tag> tags;
 
     public GiftCertificate() {
     }
@@ -39,7 +43,16 @@ public class GiftCertificate {
         this.lastUpdateDate = lastUpdateDate;
     }
 
-
+    public GiftCertificate(Long id, String name, String description, Long price, Long duration, String createDate, String lastUpdateDate, List<Tag> tags) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.duration = duration;
+        this.createDate = createDate;
+        this.lastUpdateDate = lastUpdateDate;
+        this.tags = tags;
+    }
 
     public Long getId() {
         return id;
@@ -97,4 +110,12 @@ public class GiftCertificate {
         this.lastUpdateDate = lastUpdateDate;
     }
 
+
+    public List<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<Tag> tags) {
+        this.tags = tags;
+    }
 }
