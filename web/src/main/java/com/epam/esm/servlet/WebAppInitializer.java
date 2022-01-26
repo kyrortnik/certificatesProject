@@ -7,10 +7,6 @@ import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatche
 
 public class WebAppInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
 
-
-    /*
-     * Path to which Servlet will be mapped
-     * */
     @Override
     protected Class<?>[] getRootConfigClasses() {
         return new Class<?>[]{RootConfig.class};

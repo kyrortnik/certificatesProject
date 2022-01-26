@@ -1,22 +1,29 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.CertificateService;
-
-
-import com.epam.esm.GiftCertificate;
 import com.epam.esm.CRUDService;
+import com.epam.esm.CertificateService;
+import com.epam.esm.CustomError;
+import com.epam.esm.GiftCertificate;
+import com.epam.esm.exception.GiftCertificateNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.UncheckedIOException;
-import java.rmi.ServerException;
+import java.lang.reflect.Field;
+import java.security.cert.Certificate;
+import java.util.List;
+import java.util.Map;
+
 
 @RestController
 @RequestMapping(value = "api/certificates", produces = MediaType.APPLICATION_JSON_VALUE)
 public class RestCertificateController {
+
+    private static final String MAX_CERTIFICATES_IN_REQUEST = "20";
 
 
     private final CRUDService<GiftCertificate> service;
@@ -27,47 +34,94 @@ public class RestCertificateController {
     }
 
 
+
+    @GetMapping("/")
+    public List<GiftCertificate> getCertificates(
+            @RequestParam(value ="order", defaultValue = "ASC") String order,
+            @RequestParam(value = "max", defaultValue = MAX_CERTIFICATES_IN_REQUEST) int max ) {
+        return service.getAll(order,max);
+    }
     @GetMapping("/{id}")
-    public ResponseEntity<GiftCertificate> get(@PathVariable Long id) {
+    public GiftCertificate getOne(@PathVariable Long id) {
         GiftCertificate giftCertificate = service.getOne(id);
-        HttpStatus status = giftCertificate != null ? HttpStatus.OK : HttpStatus.NOT_FOUND;
-        return new ResponseEntity<>(giftCertificate, status);
-    }
-
-/*
-* TODO negative scenarios
-* */
-    @PostMapping(path = "/",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GiftCertificate> create(@RequestBody GiftCertificate giftCertificate) {
-        GiftCertificate createsGiftCertificate = service.create(giftCertificate);
-        if (createsGiftCertificate != null) {
-
-            return new ResponseEntity<>(createsGiftCertificate, HttpStatus.CREATED);
-
-        }else{
-            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+        if (giftCertificate == null) {
+            throw new GiftCertificateNotFoundException(id);
         }
+        return giftCertificate;
     }
 
- /*   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<WebGiftCertificate> createWithLocation(@RequestBody WebGiftCertificate webGiftCertificate) {
-        WebGiftCertificate created =  gift;
-       URI createdURI =  ServletUriComponentsBuilder.fromCurrentContextPath().path("rest/certificates" + "/{id}").buildAndExpand(created.getId()).toUri();
-       return ResponseEntity.created(createdURI).body(created);
-    }*/
 
-  /*  @DeleteMapping("/{id}")
+    @PostMapping(path = "/",
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+    public GiftCertificate create(@RequestBody GiftCertificate giftCertificate) {
+        GiftCertificate createdGiftCertificate = service.create(giftCertificate);
+        if (createdGiftCertificate == null) {
+            throw new DuplicateKeyException("");
+        }
+        return createdGiftCertificate;
+    }
+
+
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-       // super.delete(id);
-    }*/
+        service.delete(id);
+    }
 
-   /* @PutMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(@RequestBody WebGiftCertificate webGiftCertificate, @PathVariable Long id) {
-       // super.update(giftCertificate, id);
-    }*/
+
+
+    @PutMapping(value = "/{id}",
+            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> update(@RequestBody GiftCertificate giftCertificate, @PathVariable Long id) {
+        if (service.update(giftCertificate, id)) {
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            CustomError error = new CustomError(getErrorCode(400), "Error while updating");
+            return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
+        }
+
+    }
+
+
+//TODO replace reflection
+    @PatchMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> update(@RequestBody Map<Object, Object> fields, @PathVariable Long id) {
+        GiftCertificate certificate = service.getOne(id);
+        if (certificate != null) {
+            fields.forEach((key, value) -> {
+                Field field = ReflectionUtils.findField(GiftCertificate.class, (String) key);
+                field.setAccessible(true);
+                ReflectionUtils.setField(field, certificate, value);
+            });
+            return new ResponseEntity<>(certificate, HttpStatus.OK);
+        }
+        else {
+            CustomError error = new CustomError(getErrorCode(400), "Error while patching");
+            return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
+        }
+
+    }
+
+
+    @ExceptionHandler(GiftCertificateNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public CustomError certificateNotFound(GiftCertificateNotFoundException e) {
+        long certificateId = e.getCertificateId();
+        return new CustomError(getErrorCode(404), "Gift Certificate [" + certificateId + "] not found");
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public CustomError duplicateKeyValues(DuplicateKeyException e) {
+        return new CustomError(getErrorCode(500), e.getCause().getMessage());
+    }
+
+
+    private static int getErrorCode(int errorCode) {
+        long counter = 0;
+        counter++;
+        return Integer.parseInt(errorCode + String.valueOf(counter));
+
+    }
 
 }

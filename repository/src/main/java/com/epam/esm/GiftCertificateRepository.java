@@ -1,18 +1,22 @@
 package com.epam.esm;
 
 
+import java.util.List;
+
 public interface GiftCertificateRepository {
 
 
     GiftCertificate getOne(Long id);
 
-
-    public void delete(Long id);
-
-
-    public void update(GiftCertificate element);
+    List<GiftCertificate> getCertificates(String order, int max);
 
 
-    public GiftCertificate create(GiftCertificate element);
+     void delete(Long id);
+
+
+     boolean update(GiftCertificate element, Long id);
+
+
+     GiftCertificate create(GiftCertificate element);
 
 }
