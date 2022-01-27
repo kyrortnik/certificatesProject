@@ -43,7 +43,7 @@ public class RestTagController {
     }
 
 
-    @PostMapping(path = "/",
+  /*  @PostMapping(path = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE)
     public Tag create(@RequestBody Tag tag) {
         Tag createdTag = service.create(tag);
@@ -51,8 +51,9 @@ public class RestTagController {
             throw new DuplicateKeyException("");
         }
         return createdTag;
-    }
+    }*/
 
+    //TODO if no element found - return 404
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {

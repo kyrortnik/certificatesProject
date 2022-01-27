@@ -55,7 +55,8 @@ public class RestCertificateController {
 
     @PostMapping(path = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public GiftCertificate create(@RequestBody GiftCertificate giftCertificate) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public @ResponseBody GiftCertificate create(@RequestBody GiftCertificate giftCertificate) {
         GiftCertificate createdGiftCertificate = service.create(giftCertificate);
         if (createdGiftCertificate == null) {
             throw new DuplicateKeyException("");
@@ -63,7 +64,7 @@ public class RestCertificateController {
         return createdGiftCertificate;
     }
 
-
+    //TODO if no element found - return 404
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {

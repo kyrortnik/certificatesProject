@@ -19,6 +19,6 @@ public interface GiftCertificateRepository {
      boolean update(GiftCertificate element, Long id);
 
 
-     GiftCertificate create(GiftCertificate element);
+    GiftCertificate create(GiftCertificate element);
 
 }

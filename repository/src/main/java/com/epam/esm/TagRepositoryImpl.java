@@ -3,9 +3,11 @@ package com.epam.esm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public class TagRepositoryImpl implements TagRepository {
 
 
