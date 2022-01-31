@@ -5,11 +5,12 @@ import java.util.List;
 
 public interface CRUDService<E> {
 
-    E getOne(Long id);
+    E getCertificate(Long id);
 
     List<E> getAll(String order, int max);
 
-    void delete(Long id);
+    //    void delete(Long id);
+    boolean delete(Long id);
 
     boolean update(E element, Long id);
 

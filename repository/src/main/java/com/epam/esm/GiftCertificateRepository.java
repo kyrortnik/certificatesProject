@@ -10,13 +10,15 @@ public interface GiftCertificateRepository {
 
     List<GiftCertificate> getCertificates(String order, int max);
 
+    List<GiftCertificate> getAllWithParams(String order, int max,String tag, String pattern);
 
-     void delete(Long id);
+
+     boolean delete(Long id);
 
 
      boolean update(GiftCertificate element, Long id);
 
 
-     GiftCertificate create(GiftCertificate element);
+    GiftCertificate create(GiftCertificate element);
 
 }

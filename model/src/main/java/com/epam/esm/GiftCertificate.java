@@ -2,6 +2,7 @@ package com.epam.esm;
 
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -21,7 +22,7 @@ public class GiftCertificate {
 
     private String lastUpdateDate;
 
-    private List<Tag> tags;
+    private List<Tag> tags = new ArrayList<>();
 
     public GiftCertificate() {
     }
