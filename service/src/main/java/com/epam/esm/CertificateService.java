@@ -4,6 +4,7 @@ package com.epam.esm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -32,13 +33,16 @@ public class CertificateService implements CRUDService<GiftCertificate> {
     }
 
     @Override
-    public boolean update(GiftCertificate element, Long id) {
-        return repository.update(element, id);
+    public boolean update(GiftCertificate giftCertificate, Long id) {
+        giftCertificate.setLastUpdateDate(LocalDateTime.now());
+        return repository.update(giftCertificate, id);
 
     }
 
     @Override
     public GiftCertificate create(GiftCertificate giftCertificate) {
+        giftCertificate.setCreateDate(LocalDateTime.now());
+        giftCertificate.setLastUpdateDate(LocalDateTime.now());
         return repository.create(giftCertificate);
     }
 

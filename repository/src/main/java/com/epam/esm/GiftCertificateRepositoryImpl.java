@@ -8,7 +8,13 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 
+import java.time.LocalDateTime;
+import java.time.chrono.IsoChronology;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.ResolverStyle;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -21,7 +27,7 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
         this.jdbcOperations = jdbcOperations;
     }
 
-    private static final String FIND_ONE = "SELECT id,name, description, price, duration, create_date, last_update_date FROM certificates WHERE id = ? LIMIT 1";
+    private static final String FIND_ONE = "SELECT id,name, description, price, duration, to_char(create_date,'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as create_date, to_char(last_update_date,'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as last_update_date FROM certificates WHERE id = ? LIMIT 1";
 
 
     private static final String INSERT_CERTIFICATE = "INSERT INTO certificates (id, name, description, price, duration, create_date, last_update_date)" +
@@ -69,6 +75,13 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
             "GROUP BY cert.id, tags.id\n" +
             "ORDER BY cert.id ASC";
 
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+//    private static final DateTimeFormatter  form = new DateTimeFormatterBuilder()
+//            .parseCaseInsensitive()
+//            .append(DateTimeFormatter.ISO_LOCAL_DATE)
+//            .appendLiteral(' ')
+//            .append(DateTimeFormatter.ISO_LOCAL_TIME)
+//            .toFormatter(ResolverStyle.STRICT, IsoChronology.INSTANCE);
 
     private static final RowMapper<GiftCertificate> MAPPER_GIFT_CERTIFICATE =
             (rs, i) -> new GiftCertificate(rs.getLong("id"),
@@ -76,9 +89,11 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
                     rs.getString("description"),
                     rs.getLong("price"),
                     rs.getLong("duration"),
-                    rs.getString("create_date"),
-                    rs.getString("last_update_date"),
-                    jsonToTagList(rs.getString("tags")));
+                    LocalDateTime.parse(rs.getString("create_date"),DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                    LocalDateTime.parse(rs.getString("last_update_date"),DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+//                    LocalDateTime.parse(rs.getString("create_date"),formatter),
+//                    LocalDateTime.parse(rs.getString("last_update_date"),formatter));
+//                    jsonToTagList(rs.getString("tags")));
 
     private static final RowMapper<Tag> MAPPER_TAG =
             (rs, i) -> new Tag(
