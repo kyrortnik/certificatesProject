@@ -1,8 +1,8 @@
 package com.epam.esm;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class TagRepositoryImpl implements TagRepository {
     private static final String GET_CREATED_TAG_ID = " SELECT currval('tags_id_seq');";
 
 
-    private final JdbcOperations jdbcOperations;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
 
     private static final RowMapper<Long> MAPPER_LOG =
@@ -40,39 +40,39 @@ public class TagRepositoryImpl implements TagRepository {
 
 
     @Autowired
-    public TagRepositoryImpl(JdbcOperations jdbcOperations) {
-        this.jdbcOperations = jdbcOperations;
+    public TagRepositoryImpl(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
     @Override
     public Tag getTag(Long id) {
-        return jdbcOperations.query(FIND_ONE, rs -> rs.next() ? MAPPER_TAG.mapRow(rs, 1) : null, id);
+        return namedParameterJdbcTemplate.getJdbcOperations().query(FIND_ONE, rs -> rs.next() ? MAPPER_TAG.mapRow(rs, 1) : null, id);
     }
 
 
     @Override
     public List<Tag> getTags(String order, int max) {
 
-        return jdbcOperations.query(String.format(GET_ALL_TAGS, order), MAPPER_TAG, max);
+        return namedParameterJdbcTemplate.getJdbcOperations().query(String.format(GET_ALL_TAGS, order), MAPPER_TAG, max);
 
     }
 
     @Override
     public boolean delete(Long id) {
 
-        return jdbcOperations.update(DELETE_TAGS, id,id) > 0;
+        return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_TAGS, id,id) > 0;
     }
 
     @Override
     public void update(Tag tag, Long id) {
-        jdbcOperations.update(UPDATE_TAGS, tag, id);
+        namedParameterJdbcTemplate.getJdbcOperations().update(UPDATE_TAGS, tag, id);
 
     }
 
     @Override
     public Tag create(Tag tag) {
-        jdbcOperations.update(INSERT_TAGS, getParams(tag));
-        Long createdTagId = jdbcOperations.query(GET_CREATED_TAG_ID, MAPPER_LOG).get(0);
+        namedParameterJdbcTemplate.getJdbcOperations().update(INSERT_TAGS, getParams(tag));
+        Long createdTagId = namedParameterJdbcTemplate.query(GET_CREATED_TAG_ID, MAPPER_LOG).get(0);
         return getTag(createdTagId);
     }
 

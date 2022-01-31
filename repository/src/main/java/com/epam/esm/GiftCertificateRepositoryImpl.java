@@ -3,28 +3,28 @@ package com.epam.esm;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import static java.util.Objects.isNull;
 
 import java.time.LocalDateTime;
-import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.ResolverStyle;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public class GiftCertificateRepositoryImpl implements GiftCertificateRepository {
 
-    private final JdbcOperations jdbcOperations;
+//    private final JdbcOperations jdbcOperations;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     @Autowired
-    public GiftCertificateRepositoryImpl(JdbcOperations jdbcOperations) {
-        this.jdbcOperations = jdbcOperations;
+    public GiftCertificateRepositoryImpl(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
     private static final String FIND_ONE = "SELECT id,name, description, price, duration, to_char(create_date,'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as create_date, to_char(last_update_date,'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as last_update_date FROM certificates WHERE id = ? LIMIT 1";
@@ -35,9 +35,13 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
 
     private static final String DELETE_CERTIFICATE = " DELETE FROM certificates WHERE id = ? ";
 
+   /* private static final String UPDATE_CERTIFICATE = "UPDATE certificates " +
+            "SET name = ?, description = ?, price = ?, duration = ?, create_date = ?, last_update_date = ?" +
+            "WHERE id = ?;";*/
+
     private static final String UPDATE_CERTIFICATE = "UPDATE certificates " +
-            "SET id = ?, name = ?, description = ?, price = ?, duration = ?, create_date = ?, last_update_date = ?" +
-            "WHERE id = ?;";
+            "SET name = :name, description = :description, price = :price, duration = :duration, create_date = :create_date, last_update_date = :last_update_date\n" +
+            "WHERE id = :id;";
 
     private static final String GET_ALL_CERTIFICATES = "SELECT id, name,description, price, duration, create_date, last_update_date FROM certificates ORDER BY name %s LIMIT ?";
 
@@ -75,14 +79,6 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
             "GROUP BY cert.id, tags.id\n" +
             "ORDER BY cert.id ASC";
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-//    private static final DateTimeFormatter  form = new DateTimeFormatterBuilder()
-//            .parseCaseInsensitive()
-//            .append(DateTimeFormatter.ISO_LOCAL_DATE)
-//            .appendLiteral(' ')
-//            .append(DateTimeFormatter.ISO_LOCAL_TIME)
-//            .toFormatter(ResolverStyle.STRICT, IsoChronology.INSTANCE);
-
     private static final RowMapper<GiftCertificate> MAPPER_GIFT_CERTIFICATE =
             (rs, i) -> new GiftCertificate(rs.getLong("id"),
                     rs.getString("name"),
@@ -91,9 +87,6 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
                     rs.getLong("duration"),
                     LocalDateTime.parse(rs.getString("create_date"),DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                     LocalDateTime.parse(rs.getString("last_update_date"),DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-//                    LocalDateTime.parse(rs.getString("create_date"),formatter),
-//                    LocalDateTime.parse(rs.getString("last_update_date"),formatter));
-//                    jsonToTagList(rs.getString("tags")));
 
     private static final RowMapper<Tag> MAPPER_TAG =
             (rs, i) -> new Tag(
@@ -107,8 +100,8 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
     @Override
     public GiftCertificate getOne(Long id) {
 
-        GiftCertificate giftCertificate = jdbcOperations.query(FIND_ONE, rs -> rs.next() ? MAPPER_GIFT_CERTIFICATE.mapRow(rs, 1) : null, id);
-        List<Tag> tags = jdbcOperations.query(TAGS_FOR_CERTIFICATE, MAPPER_TAG, id);
+        GiftCertificate giftCertificate = namedParameterJdbcTemplate.getJdbcOperations().query(FIND_ONE, rs -> rs.next() ? MAPPER_GIFT_CERTIFICATE.mapRow(rs, 1) : null, id);
+        List<Tag> tags = namedParameterJdbcTemplate.getJdbcOperations().query(TAGS_FOR_CERTIFICATE, MAPPER_TAG, id);
 
         if (giftCertificate != null) {
             giftCertificate.setTags(tags);
@@ -120,13 +113,13 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
     @Override
     public List<GiftCertificate> getCertificates(String order, int max) {
 
-        return jdbcOperations.query(String.format(GET_ALL_CERTIFICATES, order), MAPPER_GIFT_CERTIFICATE, max);
+        return namedParameterJdbcTemplate.getJdbcOperations().query(String.format(GET_ALL_CERTIFICATES, order), MAPPER_GIFT_CERTIFICATE, max);
     }
 
     @Override
     public List<GiftCertificate> getAllWithParams(String order, int max, String tag, String pattern) {
 
-        return jdbcOperations.query(TEST_AGG, MAPPER_GIFT_CERTIFICATE);
+        return namedParameterJdbcTemplate.query(TEST_AGG, MAPPER_GIFT_CERTIFICATE);
 
 
 //        List<GiftCertificate> certificates =  jdbcOperations.query(String.format(GET_CERTIFICATES_WITH_PARAMS, order), MAPPER_GIFT_CERTIFICATE, tag, pattern, pattern, max);
@@ -137,19 +130,40 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
 
     @Override
     public boolean delete(Long id) {
-        return jdbcOperations.update(DELETE_CERTIFICATE, id) > 0;
+        return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_CERTIFICATE, id) > 0;
     }
 
     @Override
     public boolean update(GiftCertificate giftCertificate, Long id) {
-        return jdbcOperations.update(UPDATE_CERTIFICATE, MAPPER_GIFT_CERTIFICATE) > 0;
+
+        GiftCertificate existingCertificate = getOne(id);
+        updateExistingCertificate(giftCertificate, existingCertificate);
+
+        Map<String,Object> map = new HashMap<>();
+        map.put("name",existingCertificate.getName());
+        map.put("description",existingCertificate.getDescription());
+        map.put("price",existingCertificate.getPrice());
+        map.put("duration",existingCertificate.getDuration());
+        map.put("create_date",existingCertificate.getCreateDate());
+        map.put("last_update_date",existingCertificate.getLastUpdateDate());
+        map.put("id",id);
+        return namedParameterJdbcTemplate.update(UPDATE_CERTIFICATE,map) > 0;
+    }
+
+    private void updateExistingCertificate(GiftCertificate updateCertificate, GiftCertificate existingCertificate) {
+        existingCertificate.setName(isNull(updateCertificate.getName()) ? existingCertificate.getName() : updateCertificate.getName());
+        existingCertificate.setDescription(isNull(updateCertificate.getDescription()) ? existingCertificate.getDescription() : updateCertificate.getDescription());
+        existingCertificate.setPrice(isNull(updateCertificate.getPrice())? existingCertificate.getPrice() : updateCertificate.getPrice());
+        existingCertificate.setDuration(isNull(updateCertificate.getDuration())? existingCertificate.getDuration() : updateCertificate.getDuration());
+        existingCertificate.setCreateDate(isNull(updateCertificate.getCreateDate())? existingCertificate.getCreateDate() : updateCertificate.getCreateDate());
+        existingCertificate.setLastUpdateDate(isNull(updateCertificate.getLastUpdateDate())? existingCertificate.getLastUpdateDate() : updateCertificate.getLastUpdateDate());
     }
 
 
     @Override
     public GiftCertificate create(GiftCertificate giftCertificate) {
-        jdbcOperations.update(INSERT_CERTIFICATE, getParams(giftCertificate));
-        Long createdCertificateId = jdbcOperations.query(GET_CREATED_CERTIFICATE_ID, MAPPER_LOG).get(0);
+        namedParameterJdbcTemplate.getJdbcOperations().update(INSERT_CERTIFICATE, getParams(giftCertificate));
+        Long createdCertificateId = namedParameterJdbcTemplate.query(GET_CREATED_CERTIFICATE_ID, MAPPER_LOG).get(0);
         return getOne(createdCertificateId);
     }
 
