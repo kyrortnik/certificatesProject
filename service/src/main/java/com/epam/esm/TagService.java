@@ -12,30 +12,30 @@ public class TagService implements CRUDService<Tag> {
     private TagRepository repository;
 
     @Override
-    public Tag getOne(Long id) {
-        return repository.getOne(id);
+    public Tag getCertificate(Long id) {
+        return repository.getTag(id);
     }
 
     @Override
     public List<Tag> getAll(String order, int max) {
 
-        return repository.getAll(order,max);
-    }
-
-    @Override
-    public void delete(Long id) {
-
-    }
-
-    @Override
-    public boolean update(Tag element, Long id) {
-
-        return false;
+        return repository.getTags(order, max);
     }
 
     @Override
     public Tag create(Tag element) {
-        return null;
+        return repository.create(element);
     }
+
+    @Override
+    public boolean delete(Long id) {
+        return repository.delete(id);
+    }
+
+    @Override
+    public boolean update(Tag element, Long id) {
+        throw new UnsupportedOperationException();
+    }
+
 
 }

@@ -8,7 +8,7 @@ public class TagNotFoundException extends RuntimeException{
         this.tagId = tagId;
     }
 
-    public long getTafId() {
+    public long getTagId() {
         return tagId;
     }
 

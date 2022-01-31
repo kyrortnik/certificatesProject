@@ -5,15 +5,15 @@ import java.util.List;
 public interface TagRepository {
 
 
-    Tag getOne(Long id);
+    Tag getTag(Long id);
 
-    List<Tag> getAll(String order, int max);
+    List<Tag> getTags(String order, int max);
 
-    public void delete(Long id);
-
-
-    public void update(Tag element,  Long id);
+     boolean delete(Long id);
 
 
-    public Long create(Tag element);
+     void update(Tag element,  Long id);
+
+
+     Tag create(Tag element);
 }

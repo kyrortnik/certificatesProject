@@ -9,16 +9,13 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Map;
 
 
 @RestController
-@RequestMapping(value = "api/certificates", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "api/v1/certificates", produces = MediaType.APPLICATION_JSON_VALUE)
 public class RestCertificateController {
 
     private static final String MAX_CERTIFICATES_IN_REQUEST = "20";
@@ -34,8 +31,8 @@ public class RestCertificateController {
 
 
     @GetMapping("/{id}")
-    public GiftCertificate getOne(@PathVariable Long id) {
-        GiftCertificate giftCertificate = service.getOne(id);
+    public GiftCertificate getCertificate(@PathVariable Long id) {
+        GiftCertificate giftCertificate = service.getCertificate(id);
         if (giftCertificate == null) {
             throw new GiftCertificateNotFoundException(id);
         }
@@ -56,7 +53,8 @@ public class RestCertificateController {
     @PostMapping(path = "/",
             consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public @ResponseBody GiftCertificate create(@RequestBody GiftCertificate giftCertificate) {
+    public @ResponseBody
+    GiftCertificate create(@RequestBody GiftCertificate giftCertificate) { 
         GiftCertificate createdGiftCertificate = service.create(giftCertificate);
         if (createdGiftCertificate == null) {
             throw new DuplicateKeyException("");
@@ -64,7 +62,7 @@ public class RestCertificateController {
         return createdGiftCertificate;
     }
 
-    //TODO if no element found - return 404
+    //TODO if no element found - 200 with message
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
@@ -72,7 +70,7 @@ public class RestCertificateController {
     }
 
     //TODO @Deprecated
-    @PutMapping(value = "/{id}",
+   /* @PutMapping(value = "/{id}",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> update(@RequestBody GiftCertificate giftCertificate, @PathVariable Long id) {
         if (service.update(giftCertificate, id)) {
@@ -82,10 +80,10 @@ public class RestCertificateController {
             return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
         }
 
-    }
+    }*/
 
 
-    //TODO replace reflection
+    /*//TODO replace reflection
     @PatchMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> update(@RequestBody Map<Object, Object> fields, @PathVariable Long id) {
         GiftCertificate certificate = service.getOne(id);
@@ -102,7 +100,18 @@ public class RestCertificateController {
         }
 
     }
+*/
 
+
+    @PatchMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> update(@RequestBody GiftCertificate giftCertificate, @PathVariable Long id) {
+        if (service.update(giftCertificate, id)) {
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            CustomError error = new CustomError(getErrorCode(400), "Error while updating");
+            return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
+        }
+    }
 
     @ExceptionHandler(GiftCertificateNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)

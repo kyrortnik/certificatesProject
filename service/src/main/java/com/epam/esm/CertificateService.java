@@ -13,7 +13,7 @@ public class CertificateService implements CRUDService<GiftCertificate> {
     private GiftCertificateRepository repository;
 
     @Override
-    public GiftCertificate getOne(Long id) {
+    public GiftCertificate getCertificate(Long id) {
         return repository.getOne(id);
     }
 
@@ -22,9 +22,13 @@ public class CertificateService implements CRUDService<GiftCertificate> {
         return repository.getCertificates(order, max);
     }
 
-    @Override
+    /*@Override
     public void delete(Long id) {
         repository.delete(id);
+    }*/
+    @Override
+    public boolean delete(Long id){
+        return repository.delete(id);
     }
 
     @Override
