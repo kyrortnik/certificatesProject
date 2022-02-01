@@ -1,14 +1,16 @@
 package com.epam.esm.configs;
 
 import org.apache.commons.dbcp.BasicDataSource;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
+import org.h2.tools.Server;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import javax.sql.DataSource;
+import java.sql.SQLException;
 
 @Configuration
 @ComponentScan(basePackages = {"beans", "com.epam.esm.beans"},
@@ -17,6 +19,7 @@ import javax.sql.DataSource;
         })
 public class RootConfig {
 
+    @Profile("prod")
     @Bean
     public BasicDataSource dataSource() {
         BasicDataSource ds = new BasicDataSource();
@@ -27,7 +30,16 @@ public class RootConfig {
         ds.setInitialSize(5);
         ds.setMaxActive(10);
         return ds;
+    }
 
+    @Profile("dev")
+    @Bean
+    public DataSource embeddedDataSource() {
+        return new EmbeddedDatabaseBuilder()
+        .setType(EmbeddedDatabaseType.H2)
+        .addScript("classpath:schema.sql")
+        .addScript("classpath:test-data.sql")
+        .build();
     }
 
     @Bean
@@ -35,5 +47,8 @@ public class RootConfig {
         return new NamedParameterJdbcTemplate(dataSource);
     }
 
-
+    @Bean
+    public SimpleJdbcInsert simpleJdbcInsert(DataSource dataSource){
+        return new SimpleJdbcInsert(dataSource);
+    }
 }
