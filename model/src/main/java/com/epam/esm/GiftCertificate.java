@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,9 +26,6 @@ public class GiftCertificate {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd@HH:mm:ss.SSS")
     private LocalDateTime lastUpdateDate;
 
-//    private String createDate;
-
-//    private String lastUpdateDate;
 
     private List<Tag> tags = new ArrayList<>();
 
@@ -40,29 +36,6 @@ public class GiftCertificate {
         this.id = id;
         this.name = name;
     }
-
-//
-//    public GiftCertificate(Long id, String name, String description, Long price, Long duration,
-//                           String createDate, String lastUpdateDate) {
-//        this.id = id;
-//        this.name = name;
-//        this.description = description;
-//        this.price = price;
-//        this.duration = duration;
-//        this.createDate = createDate;
-//        this.lastUpdateDate = lastUpdateDate;
-//    }
-
-//    public GiftCertificate(Long id, String name, String description, Long price, Long duration, String createDate, String lastUpdateDate, List<Tag> tags) {
-//        this.id = id;
-//        this.name = name;
-//        this.description = description;
-//        this.price = price;
-//        this.duration = duration;
-//        this.createDate = createDate;
-//        this.lastUpdateDate = lastUpdateDate;
-//        this.tags = tags;
-//    }
 
 
     public GiftCertificate(Long id, String name, String description, Long price, Long duration,
@@ -151,22 +124,5 @@ public class GiftCertificate {
     public void setTags(List<Tag> tags) {
         this.tags = tags;
     }
-
-    //    public String getCreateDate() {
-//        return createDate;
-//    }
-//
-//    public void setCreateDate(String createDate) {
-//        this.createDate = createDate;
-//    }
-//
-//    public String getLastUpdateDate() {
-//        return lastUpdateDate;
-//    }
-//
-//    public void setLastUpdateDate(String lastUpdateDate) {
-//        this.lastUpdateDate = lastUpdateDate;
-//    }
-
 
 }
