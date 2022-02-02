@@ -8,7 +8,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public class TagRepositoryImpl implements TagRepository {
@@ -46,7 +48,7 @@ public class TagRepositoryImpl implements TagRepository {
     @Autowired
     public TagRepositoryImpl(NamedParameterJdbcTemplate namedParameterJdbcTemplate, SimpleJdbcInsert simpleJdbcInsert) {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
-        this.simpleJdbcInsert = simpleJdbcInsert.withTableName("tags").usingGeneratedKeyColumns("id");
+        this.simpleJdbcInsert =  simpleJdbcInsert.withTableName("tags").usingGeneratedKeyColumns("id");;
     }
 
     @Override
@@ -69,8 +71,9 @@ public class TagRepositoryImpl implements TagRepository {
     @Override
     @Transactional
     public Tag create(Tag tag) {
+//        simpleJdbcInsert.withTableName("tags").usingGeneratedKeyColumns("id");
         BeanPropertySqlParameterSource source = new BeanPropertySqlParameterSource(tag);
-        Long createdTagId = (Long) simpleJdbcInsert.executeAndReturnKey(source);
+        long createdTagId = (Integer)simpleJdbcInsert.executeAndReturnKey(source);
         return getTag(createdTagId);
     }
 

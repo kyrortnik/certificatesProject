@@ -15,7 +15,7 @@ public class CertificateService implements CRUDService<GiftCertificate> {
 
     @Override
     public GiftCertificate getCertificate(Long id) {
-        return repository.getOne(id);
+        return repository.getCertificate(id);
     }
 
     @Override

@@ -6,7 +6,7 @@ import java.util.List;
 public interface GiftCertificateRepository {
 
 
-    GiftCertificate getOne(Long id);
+    GiftCertificate getCertificate(Long id);
 
     List<GiftCertificate> getCertificates(String order, int max);
 

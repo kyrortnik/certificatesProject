@@ -48,6 +48,7 @@ public class RootConfig {
     }
 
     @Bean
+    @Scope("prototype")
     public SimpleJdbcInsert simpleJdbcInsert(DataSource dataSource){
         return new SimpleJdbcInsert(dataSource);
     }
