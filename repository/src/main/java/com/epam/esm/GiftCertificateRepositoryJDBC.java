@@ -3,30 +3,35 @@ package com.epam.esm;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.*;
+import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import static java.util.Objects.isNull;
-
-import java.sql.*;
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import static java.util.Objects.isNull;
+
+@Profile("prod")
 @Repository
-public class GiftCertificateRepositoryImpl implements GiftCertificateRepository {
+public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository {
 
-    //    private final JdbcOperations jdbcOperations;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsert;
 
     @Autowired
-    public GiftCertificateRepositoryImpl(NamedParameterJdbcTemplate namedParameterJdbcTemplate,SimpleJdbcInsert simpleJdbcInsert) {
+    public GiftCertificateRepositoryJDBC(NamedParameterJdbcTemplate namedParameterJdbcTemplate, SimpleJdbcInsert simpleJdbcInsert) {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
         this.simpleJdbcInsert = simpleJdbcInsert.withTableName("certificates").usingGeneratedKeyColumns("id");
     }
@@ -34,16 +39,10 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
     private static final String FIND_ONE = "SELECT id,name, description, price, duration, to_char(create_date,'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as create_date, to_char(last_update_date,'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as last_update_date FROM certificates WHERE id = ? LIMIT 1";
 
 
-    /* private static final String INSERT_CERTIFICATE = "INSERT INTO certificates (id, name, description, price, duration, create_date, last_update_date)" +
-             "VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)";*/
     private static final String INSERT_CERTIFICATE = "INSERT INTO certificates (id, name, description, price, duration, create_date, last_update_date)" +
             "VALUES (DEFAULT, :name, :description, :price, :duration, :create_date, :last_update_date)";
 
     private static final String DELETE_CERTIFICATE = " DELETE FROM certificates WHERE id = ? ";
-
-   /* private static final String UPDATE_CERTIFICATE = "UPDATE certificates " +
-            "SET name = ?, description = ?, price = ?, duration = ?, create_date = ?, last_update_date = ?" +
-            "WHERE id = ?;";*/
 
     private static final String UPDATE_CERTIFICATE = "UPDATE certificates " +
             "SET name = :name, description = :description, price = :price, duration = :duration, create_date = :create_date, last_update_date = :last_update_date\n" +
@@ -84,12 +83,12 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
             "ON ct.tag_id = tags.id \n" +
             "GROUP BY cert.id, tags.id\n" +
             "ORDER BY cert.id ASC";
-//
-//    private static final String GET_TAGS_IDS = "SELECT tags.id from tags \n" +
-//            "LEFT JOIN certificates_tags AS cefr_tags ON tags.id =  cefr_tags.tag_id\n" +
-//            "WHERE cefr_tags.certificate_id = ? ;";
 
-    private static final String GET_TAGS_IDS = "SELECT * FROM getTagsIds(?)";
+    private static final String GET_TAGS_IDS = "SELECT * FROM get_tags_ids(?)";
+
+    private static final String CREATE_NEW_TAGS_CALL = "{call create_new_tags(?)}";
+
+    private static final String CREATE_CERTIFICATE_TAG_RELATION = "{call create_cert_tag_relation(?,?)}";
 
     private static final RowMapper<GiftCertificate> MAPPER_GIFT_CERTIFICATE =
             (rs, i) -> new GiftCertificate(rs.getLong("id"),
@@ -99,6 +98,8 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
                     rs.getLong("duration"),
                     LocalDateTime.parse(rs.getString("create_date"), DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                     LocalDateTime.parse(rs.getString("last_update_date"), DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
+
 
     private static final RowMapper<Tag> MAPPER_TAG =
             (rs, i) -> new Tag(
@@ -128,6 +129,7 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
         return namedParameterJdbcTemplate.getJdbcOperations().query(String.format(GET_ALL_CERTIFICATES, order), MAPPER_GIFT_CERTIFICATE, max);
     }
 
+    //TODO use params
     @Override
     public List<GiftCertificate> getAllWithParams(String order, int max, String tag, String pattern) {
 
@@ -171,57 +173,51 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
     public GiftCertificate create(GiftCertificate giftCertificate) {
 
         BeanPropertySqlParameterSource source = new BeanPropertySqlParameterSource(giftCertificate);
-        long createdGiftId = (Integer)simpleJdbcInsert.executeAndReturnKey(source);
+        long createdGiftCertificateId = (Integer) simpleJdbcInsert.executeAndReturnKey(source);
         List<Tag> tags = giftCertificate.getTags();
-        List<String> tagNames = new ArrayList<>();
-//        List<Long> tagIds = new ArrayList<>();
+
         if (!tags.isEmpty()) {
+            List<String> tagNames = new ArrayList<>();
             tags.forEach((t) -> tagNames.add(t.getName()));
-//            tags.forEach((t) -> tagIds.add(t.getId()));
-            List<SqlParameter> parameters = new ArrayList<>();
-            namedParameterJdbcTemplate.getJdbcOperations().call(con -> {
-                        CallableStatement cs = con.prepareCall("{call createNewTags(?)}");
-                        cs.setArray(1, con.createArrayOf("varchar", tagNames.toArray()));
-                        return cs;
-                    },
-                    parameters
-            );
-
-
-            List<SqlParameter> declaredParameters  = new ArrayList<>();
-            declaredParameters.add(new SqlParameter(Types.ARRAY));
-//            declaredParameters.add(new SqlOutParameter("gettagsids", Types.INTEGER));
-//            List<Long> tagsForCertificate = namedParameterJdbcTemplate.getJdbcOperations().query(GET_TAGS_IDS, (rs, i) -> rs.getLong(1),giftCertificate.getId());
-
-
-            List<Integer> list = namedParameterJdbcTemplate.getJdbcOperations().query(con -> {
-                        PreparedStatement ps = con.prepareStatement(GET_TAGS_IDS);
-                        ps.setArray(1,con.createArrayOf("varchar",tagNames.toArray()));
-                        return ps;
-                    },MAPPER_ID
-                    );
-
-//            Map<String,Object> map = namedParameterJdbcTemplate.getJdbcOperations().call(con -> {
-//                CallableStatement cs = con.prepareCall(GET_TAGS_IDS);
-//                cs.setArray(1, con.createArrayOf("varchar",tagNames.toArray()));
-////                cs.registerOutParameter(1,Types.INTEGER);
-//                return cs;
-//            },declaredParameters);
-
-
-
-            namedParameterJdbcTemplate.getJdbcOperations().call(con -> {
-                        CallableStatement cs = con.prepareCall("{call createCertTagRelation(?,?)}");
-                        cs.setArray(1, con.createArrayOf("integer",list.toArray()));
-                        cs.setInt(2, (int)createdGiftId);
-                        return cs;
-                    }, parameters
-            );
-
+            createNewTags(tagNames);
+            List<Integer> list = getTagIdsForNames(tagNames);
+            createCertificateTagRelation((int) createdGiftCertificateId, list);
         }
-
-        return getCertificate(createdGiftId);
+        return getCertificate(createdGiftCertificateId);
     }
+
+
+    private void createNewTags(List<String> tagNames) {
+        List<SqlParameter> parameters = new ArrayList<>();
+        namedParameterJdbcTemplate.getJdbcOperations().call(con -> {
+                    CallableStatement cs = con.prepareCall(CREATE_NEW_TAGS_CALL);
+                    cs.setArray(1, con.createArrayOf("varchar", tagNames.toArray()));
+                    return cs;
+                },
+                parameters
+        );
+    }
+
+    private List<Integer> getTagIdsForNames(List<String> tagNames) {
+        return namedParameterJdbcTemplate.getJdbcOperations().query(con -> {
+                    PreparedStatement ps = con.prepareStatement(GET_TAGS_IDS);
+                    ps.setArray(1, con.createArrayOf("varchar", tagNames.toArray()));
+                    return ps;
+                }, MAPPER_ID
+        );
+    }
+
+    private void createCertificateTagRelation(int createdGiftId, List<Integer> list) {
+        List<SqlParameter> parameters = new ArrayList<>();
+        namedParameterJdbcTemplate.getJdbcOperations().call(con -> {
+                    CallableStatement cs = con.prepareCall(CREATE_CERTIFICATE_TAG_RELATION);
+                    cs.setArray(1, con.createArrayOf("integer", list.toArray()));
+                    cs.setInt(2, createdGiftId);
+                    return cs;
+                }, parameters
+        );
+    }
+
 
     private Map<String, Object> getParamsMap(GiftCertificate giftCertificate) {
         Map<String, Object> map = new HashMap<>();

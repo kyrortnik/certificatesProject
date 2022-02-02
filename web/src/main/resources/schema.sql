@@ -1,17 +1,15 @@
-drop table if exists certificates_tags;
-drop table if exists tags;
-drop table if exists certificates;
-
-
+DROP TABLE if EXISTS certificates_tags;
+DROP TABLE if EXISTS tags;
+DROP TABLE if EXISTS certificates;
 
 CREATE TABLE IF NOT EXISTS certificates (
-  id bigint auto_increment primary key,
+  id bigint auto_increment PRIMARY KEY,
   name VARCHAR (255) UNIQUE NOT NULL,
   description VARCHAR (255),
   price NUMERIC (20,2),
   duration VARCHAR (255),
-  create_date timestamp,
-  last_update_date timestamp
+  create_date TIMESTAMP,
+  last_update_date TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS tags (
@@ -28,68 +26,46 @@ CREATE TABLE IF NOT EXISTS certificates_tags (
 );
 
 
-CREATE OR REPLACE FUNCTION
-createNewTags(tagNames varchar[]) RETURNS void AS
-$$
-DECLARE
-tagName varchar;
-nameCount integer;
-        BEGIN
-		FOREACH tagName IN ARRAY $1
-		LOOP
-  		SELECT COUNT(name) INTO nameCount FROM tags WHERE name = tagName;
-		IF nameCount <= 0
-		 THEN INSERT INTO tags VALUES (DEFAULT,tagName);
-			END IF;
-			END LOOP;
-        END;
-$$
- LANGUAGE plpgsql;
 
 
- CREATE OR REPLACE FUNCTION
- createCertTagRelation(tagIds integer[], certId integer) RETURNS void AS
- $$
- DECLARE
- tagName integer;
-         BEGIN
- 		FOREACH tagName IN ARRAY $1
- 		LOOP
-   		INSERT INTO certificates_tags VALUES ($2,tagName);
- 			END LOOP;
-         END;
- $$
-  LANGUAGE plpgsql;
-
-
---  CREATE OR REPLACE FUNCTION
---  getTagsIds(tagNames varchar[])  RETURNS TABLE (id int) AS
---  $$
---  DECLARE
---  tagName varchar;
---          BEGIN
---  		FOREACH tagName IN ARRAY $1
---  		LOOP
---    		RETURN QUERY SELECT tags.id FROM tags WHERE name = tagName;
---  			END LOOP;
---          END;
---  $$
---   LANGUAGE plpgsql;
+--CREATE OR REPLACE FUNCTION create_new_tags(tagNames varchar[]) RETURNS void AS '
+--DECLARE
+-- tagName varchar;
+-- nameCount integer;
+-- BEGIN
+-- FOREACH tagName IN ARRAY $1
+--    LOOP
+--    SELECT COUNT(name) INTO nameCount FROM tags WHERE name = tagName;
+--        IF nameCount <= 0
+--        THEN INSERT INTO tags VALUES (DEFAULT,tagName);
+-- 	    END IF;
+--    END LOOP;
+-- END;'
+-- LANGUAGE plpgsql;
 --
-
-      CREATE OR REPLACE FUNCTION
-     getTagsIds(tagNames varchar[])  RETURNS TABLE (ids int) AS
-     $$
-     DECLARE
-       tagName varchar;
-             BEGIN
-     		FOREACH tagName IN ARRAY $1
-     		LOOP
-       	  SELECT tags.id INTO ids FROM tags WHERE name = tagName;
-   		  RETURN next;
-     			END LOOP;
-             END;
-     $$
-      LANGUAGE plpgsql;
-
-
+--
+--CREATE OR REPLACE FUNCTION create_cert_tag_relation(tag_ids integer[], cert_id integer)  RETURNS void AS '
+--DECLARE
+--tagName integer;
+--BEGIN
+--FOREACH tagName IN ARRAY $1
+--    LOOP
+--    INSERT INTO certificates_tags VALUES ($2,tagName);
+--	END LOOP;
+--END;
+--'
+--LANGUAGE plpgsql;
+--
+--
+--CREATE OR REPLACE FUNCTION get_tags_ids(tag_names varchar[]) RETURNS TABLE (ids int) AS '
+--DECLARE
+--tagName varchar;
+--BEGIN
+--FOREACH tagName IN ARRAY $1
+--    LOOP
+--    SELECT tags.id INTO ids FROM tags WHERE name = tagName;
+--    RETURN next;
+--    END LOOP;
+--END;
+--'
+--LANGUAGE plpgsql;
