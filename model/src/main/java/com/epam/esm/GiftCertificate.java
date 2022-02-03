@@ -1,7 +1,9 @@
 package com.epam.esm;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,9 +20,12 @@ public class GiftCertificate {
 
     private Long duration;
 
-    private String createDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
+    private LocalDateTime createDate;
 
-    private String lastUpdateDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
+    private LocalDateTime lastUpdateDate;
+
 
     private List<Tag> tags = new ArrayList<>();
 
@@ -34,7 +39,7 @@ public class GiftCertificate {
 
 
     public GiftCertificate(Long id, String name, String description, Long price, Long duration,
-                           String createDate, String lastUpdateDate) {
+                           LocalDateTime createDate, LocalDateTime lastUpdateDate) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -44,7 +49,7 @@ public class GiftCertificate {
         this.lastUpdateDate = lastUpdateDate;
     }
 
-    public GiftCertificate(Long id, String name, String description, Long price, Long duration, String createDate, String lastUpdateDate, List<Tag> tags) {
+    public GiftCertificate(Long id, String name, String description, Long price, Long duration, LocalDateTime createDate, LocalDateTime lastUpdateDate, List<Tag> tags) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -54,6 +59,7 @@ public class GiftCertificate {
         this.lastUpdateDate = lastUpdateDate;
         this.tags = tags;
     }
+
 
     public Long getId() {
         return id;
@@ -95,22 +101,21 @@ public class GiftCertificate {
         this.duration = duration;
     }
 
-    public String getCreateDate() {
+    public LocalDateTime getCreateDate() {
         return createDate;
     }
 
-    public void setCreateDate(String createDate) {
+    public void setCreateDate(LocalDateTime createDate) {
         this.createDate = createDate;
     }
 
-    public String getLastUpdateDate() {
+    public LocalDateTime getLastUpdateDate() {
         return lastUpdateDate;
     }
 
-    public void setLastUpdateDate(String lastUpdateDate) {
+    public void setLastUpdateDate(LocalDateTime lastUpdateDate) {
         this.lastUpdateDate = lastUpdateDate;
     }
-
 
     public List<Tag> getTags() {
         return tags;
@@ -119,4 +124,5 @@ public class GiftCertificate {
     public void setTags(List<Tag> tags) {
         this.tags = tags;
     }
+
 }
