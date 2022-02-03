@@ -38,6 +38,9 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
 
     private static final String FIND_ONE = "SELECT id,name, description, price, duration, to_char(create_date,'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as create_date, to_char(last_update_date,'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as last_update_date FROM certificates WHERE id = ? LIMIT 1";
 
+//    private static final String FIND_ONE = "SELECT id,name, description, price, duration, to_timestamp(create_date,'YYYY-MM-DD HH:MI:SS.MS') as create_date, to_timestamp(last_update_date,'YYYY-MM-DD HH:MI:SS.MS') as last_update_date FROM certificates WHERE id = ? LIMIT 1";
+
+
 
     private static final String INSERT_CERTIFICATE = "INSERT INTO certificates (id, name, description, price, duration, create_date, last_update_date)" +
             "VALUES (DEFAULT, :name, :description, :price, :duration, :create_date, :last_update_date)";

@@ -29,7 +29,8 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
         this.simpleJdbcInsert = simpleJdbcInsert.withTableName("certificates").usingGeneratedKeyColumns("id");
     }
 
-    private static final String FIND_ONE = "SELECT id,name, description, price, duration, to_char(create_date,'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as create_date, to_char(last_update_date,'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as last_update_date FROM certificates WHERE id = ? LIMIT 1";
+    private static final String FIND_ONE = "SELECT id,name, description, price, duration, cast(create_date AS TIMESTAMP(4)) as create_date, cast(last_update_date  AS TIMESTAMP(4)) as last_update_date FROM certificates WHERE id = ? LIMIT 1";
+
 
 
     private static final String INSERT_CERTIFICATE = "INSERT INTO certificates (id, name, description, price, duration, create_date, last_update_date)" +
@@ -90,8 +91,9 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
                     rs.getString("description"),
                     rs.getLong("price"),
                     rs.getLong("duration"),
-                    LocalDateTime.parse(rs.getString("create_date"), DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                    LocalDateTime.parse(rs.getString("last_update_date"), DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    LocalDateTime.parse(rs.getString("create_date").replace( " ", "T" ) , DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                    LocalDateTime.parse(rs.getString("last_update_date").replace( " ", "T" ), DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
 
 
     private static final RowMapper<Tag> MAPPER_TAG =
@@ -171,11 +173,8 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
         if (!tags.isEmpty()) {
             List<String> tagNames = new ArrayList<>();
             tags.forEach((t) -> tagNames.add(t.getName()));
-//            createNewTags(tagNames);
             namedParameterJdbcTemplate.getJdbcOperations().update(CREATE_NEW_TAGS_CALL, tagNames);
-//            List<Integer> tagIds = getTagIdsForNames(tagNames);
-            List<Integer> tagIds = namedParameterJdbcTemplate.getJdbcOperations().query(GET_TAGS_IDS, MAPPER_ID, tagNames);
-//            createCertificateTagRelation((int) createdGiftCertificateId, tagIds);
+            List<Long> tagIds = Arrays.asList(Objects.requireNonNull(namedParameterJdbcTemplate.getJdbcOperations().queryForObject(GET_TAGS_IDS, Long[].class, tagNames)));
             namedParameterJdbcTemplate.getJdbcOperations().update(CREATE_CERTIFICATE_TAG_RELATION, createdGiftCertificateId, tagIds);
         }
         return getCertificate(createdGiftCertificateId);

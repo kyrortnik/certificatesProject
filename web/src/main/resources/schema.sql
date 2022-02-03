@@ -18,9 +18,8 @@ CREATE TABLE IF NOT EXISTS tags (
 );
 
 CREATE TABLE IF NOT EXISTS certificates_tags (
-  id bigint auto_increment PRIMARY KEY,
-  certificate_id INT NOT NULL,
-  tag_id INT NOT NULL,
+  certificate_id bigint NOT NULL,
+  tag_id bigint NOT NULL,
   CONSTRAINT fk_certificates FOREIGN KEY(certificate_id) REFERENCES certificates(id),
   CONSTRAINT fk_tags FOREIGN KEY(tag_id) REFERENCES tags(id)
 );

@@ -3,11 +3,13 @@ package com.epam.esm.utilities.H2;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import javax.xml.transform.Result;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Profile("dev")
@@ -40,8 +42,8 @@ public class Function {
         }
     }
 
-    public static List<Integer> getTagIdsForNames(Connection connection, List<String> tagNames) throws SQLException {
-        List<Integer> tagsIds = new ArrayList<>();
+    public static Long[] getTagIdsForNames(Connection connection, List<String> tagNames) throws SQLException {
+        List<Long> tagsIds = new ArrayList<>();
         PreparedStatement statement;
         ResultSet rs;
 
@@ -50,19 +52,25 @@ public class Function {
             statement.setString(1, name);
             rs = statement.executeQuery();
             if (rs.next()) {
-                tagsIds.add(rs.getInt(1));
+                tagsIds.add(rs.getLong(1));
             }
         }
-        return tagsIds;
+
+        return tagsIds.toArray(new Long[0]);
     }
 
-    public static void createCertificateTagRelation(Connection connection, int createdGiftId, List<Integer> list) throws SQLException {
+
+
+
+
+
+    public static void createCertificateTagRelation(Connection connection, Long createdGiftId, List<Long> list) throws SQLException {
         PreparedStatement statement;
 
-        for (Integer id : list) {
+        for (Long id : list) {
             statement = connection.prepareStatement(CREATE_CERTIFICATE_TAG_RELATION);
-            statement.setInt(1, createdGiftId);
-            statement.setInt(2, id);
+            statement.setLong(1, createdGiftId);
+            statement.setLong(2, id);
             statement.executeUpdate();
         }
     }
