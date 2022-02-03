@@ -26,7 +26,13 @@ CREATE TABLE IF NOT EXISTS certificates_tags (
 );
 
 
+--CREATE ALIAS query FOR "com.epam.esm.utilities.H2.Function.query";
 
+CREATE ALIAS IF NOT EXISTS create_new_tags FOR "com.epam.esm.utilities.H2.Function.createNewTags";
+
+CREATE ALIAS IF NOT EXISTS get_tags_ids FOR "com.epam.esm.utilities.H2.Function.getTagIdsForNames";
+
+CREATE ALIAS IF NOT EXISTS create_cert_tag_relation FOR "com.epam.esm.utilities.H2.Function.createCertificateTagRelation";
 
 --CREATE OR REPLACE FUNCTION create_new_tags(tagNames varchar[]) RETURNS void AS '
 --DECLARE
