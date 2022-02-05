@@ -1,5 +1,8 @@
-package com.epam.esm;
+package com.epam.esm.impl;
 
+import com.epam.esm.GiftCertificate;
+import com.epam.esm.GiftCertificateRepository;
+import com.epam.esm.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.RowMapper;
@@ -56,17 +59,38 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
 
     private static final String GET_CREATED_CERTIFICATE_ID = " SELECT currval('certificates_id_seq');";
 
-    private static final String TEST_AGG =
-            "SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date,\n" +
-                    "array_to_json(array_agg(tags)) as tags\n" +
-                    "FROM \n" +
-                    "certificates AS cert \n" +
-                    "LEFT JOIN certificates_tags AS ct \n" +
-                    "ON cert.id = ct.certificate_id\n" +
-                    "LEFT JOIN tags \n" +
-                    "ON ct.tag_id = tags.id\n" +
-                    "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date\n" +
-                    "ORDER BY cert.id ASC";
+//    private static final String TEST_AGG =
+//            "SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date,\n" +
+//                    "array_to_json(array_agg(tags)) as tags\n" +
+//                    "FROM \n" +
+//                    "certificates AS cert \n" +
+//                    "LEFT JOIN certificates_tags AS ct \n" +
+//                    "ON cert.id = ct.certificate_id\n" +
+//                    "LEFT JOIN tags \n" +
+//                    "ON ct.tag_id = tags.id\n" +
+//                    "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date\n" +
+//                    "ORDER BY cert.id ASC";
+
+
+    private static final String TEST_AGG = "(SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date, to_jsonb(array_agg(tags)) as tags\n" +
+            "FROM\n" +
+            "certificates AS cert\n" +
+            "LEFT JOIN certificates_tags AS ct\n" +
+            "ON cert.id = ct.certificate_id\n" +
+            "LEFT JOIN tags\n" +
+            "ON ct.tag_id = tags.id  WHERE  cert.name =:tagName\n" +
+            "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date)\n" +
+            "UNION\n" +
+            "(SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date,\n" +
+            "to_jsonb(array_agg(tags)) as tags\n" +
+            "FROM\n" +
+            "certificates AS cert\n" +
+            "LEFT JOIN certificates_tags AS ct\n" +
+            "ON cert.id = ct.certificate_id\n" +
+            "LEFT JOIN tags\n" +
+            "ON ct.tag_id = tags.id  WHERE  cert.name SIMILAR TO :pattern OR cert.description SIMILAR TO :pattern\n" +
+            "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date\n" +
+            "ORDER BY cert.name %s LIMIT :max)" ;
 
     private static final String TAGS_FOR_CERTIFICATES = "SELECT array_to_json(array_agg(tags)) as tags\n" +
             "FROM \n" +
@@ -128,6 +152,9 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
     @Override
     public List<GiftCertificate> getAllWithParams(String order, int max, String tag, String pattern) {
 
+
+
+
         return namedParameterJdbcTemplate.query(TEST_AGG, MAPPER_GIFT_CERTIFICATE);
 
 
@@ -141,9 +168,9 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
     public boolean delete(Long id) {
         return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_CERTIFICATE, id) > 0;
     }
-
+  //TODO - refactor as in JDBC
     @Override
-    public boolean update(GiftCertificate giftCertificate, Long id) {
+    public boolean update(GiftCertificate giftCertificate, long id) {
 
         GiftCertificate existingCertificate = getCertificate(id);
         updateExistingCertificate(giftCertificate, existingCertificate);

@@ -1,5 +1,7 @@
-package com.epam.esm;
+package com.epam.esm.impl;
 
+import com.epam.esm.Tag;
+import com.epam.esm.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
@@ -8,12 +10,10 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Repository
-public class TagRepositoryImpl implements TagRepository {
+public class TagRepositoryJDBC implements TagRepository {
 
 
     private static final String FIND_TAG = "SELECT id,name FROM tags WHERE id = ? LIMIT 1";
@@ -23,13 +23,6 @@ public class TagRepositoryImpl implements TagRepository {
     private static final String DELETE_TAGS =
             "DELETE FROM certificates_tags WHERE tag_id = ?;\n" +
                     "DELETE FROM tags WHERE id = ?;";
-
-//    private static final String UPDATE_TAGS = "UPDATE tags " +
-//            "SET id = ?, name = ?, WHERE id = ?";
-
-//    private static final String INSERT_TAGS = "INSERT INTO tags VALUES (DEFAULT, ?)";
-
-//    private static final String GET_CREATED_TAG_ID = " SELECT currval('tags_id_seq');";
 
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -46,7 +39,7 @@ public class TagRepositoryImpl implements TagRepository {
 
 
     @Autowired
-    public TagRepositoryImpl(NamedParameterJdbcTemplate namedParameterJdbcTemplate, SimpleJdbcInsert simpleJdbcInsert) {
+    public TagRepositoryJDBC(NamedParameterJdbcTemplate namedParameterJdbcTemplate, SimpleJdbcInsert simpleJdbcInsert) {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
         this.simpleJdbcInsert =  simpleJdbcInsert.withTableName("tags").usingGeneratedKeyColumns("id");;
     }
@@ -67,19 +60,12 @@ public class TagRepositoryImpl implements TagRepository {
         return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_TAGS, id, id) > 0;
     }
 
-
     @Override
     @Transactional
     public Tag create(Tag tag) {
-//        simpleJdbcInsert.withTableName("tags").usingGeneratedKeyColumns("id");
         BeanPropertySqlParameterSource source = new BeanPropertySqlParameterSource(tag);
         long createdTagId = (Integer)simpleJdbcInsert.executeAndReturnKey(source);
         return getTag(createdTagId);
     }
 
-   /* private Object[] getParams(Tag tag) {
-        return new Object[]{
-                tag.getName()
-        };
-    }*/
 }

@@ -8,34 +8,38 @@ import java.util.List;
 @Service
 public class TagService implements CRUDService<Tag> {
 
-    @Autowired
-    private TagRepository repository;
 
-    @Override
-    public Tag getCertificate(Long id) {
-        return repository.getTag(id);
+    private final TagRepository tagRepository;
+
+    @Autowired
+    public TagService (TagRepository tagRepository) {
+        this.tagRepository = tagRepository;
     }
 
     @Override
-    public List<Tag> getAll(String order, int max) {
+    public Tag getEntity(Long id) {
+        return tagRepository.getTag(id);
+    }
 
-        return repository.getTags(order, max);
+    @Override
+    public List<Tag> getEntities(String order, int max) {
+
+        return tagRepository.getTags(order, max);
     }
 
     @Override
     public Tag create(Tag element) {
-        return repository.create(element);
+        return tagRepository.create(element);
     }
 
     @Override
     public boolean delete(Long id) {
-        return repository.delete(id);
+        return tagRepository.delete(id);
     }
 
     @Override
     public boolean update(Tag element, Long id) {
         throw new UnsupportedOperationException();
     }
-
 
 }

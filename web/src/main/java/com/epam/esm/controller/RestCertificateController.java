@@ -11,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -33,21 +32,21 @@ public class RestCertificateController {
 
     @GetMapping("/{id}")
     public GiftCertificate getCertificate(@PathVariable Long id) {
-        GiftCertificate giftCertificate = service.getCertificate(id);
+        GiftCertificate giftCertificate = service.getEntity(id);
         if (giftCertificate == null) {
             throw new GiftCertificateNotFoundException(id);
         }
         return giftCertificate;
     }
 
-    //TODO test this method
+    //TODO implement this method
     @GetMapping("/")
     public List<GiftCertificate> getCertificates(
             @RequestParam(value = "order", defaultValue = DEFAULT_ORDER) String order,
             @RequestParam(value = "max", defaultValue = MAX_CERTIFICATES_IN_REQUEST) int max,
             @RequestParam(value = "tag", required = false) String tag,
             @RequestParam(value = "pattern", required = false) String pattern) {
-        return service.getAllWithParams(order, max, tag, pattern);
+        return service.getEntitiesWithParams(order, max, tag, pattern);
     }
 
 
@@ -63,56 +62,31 @@ public class RestCertificateController {
         return createdGiftCertificate;
     }
 
-    //TODO if no element found - 200 with message
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        ResponseEntity<String> responseEntity;
+        if (service.delete(id)) {
+            responseEntity = new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } else {
+            responseEntity = new ResponseEntity<>("Certificate " + id + " doesn't exist", HttpStatus.OK);
+        }
+        return responseEntity;
     }
 
 
     @PutMapping(value = "/{id}",
             consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> update(@RequestBody GiftCertificate giftCertificate, @PathVariable Long id) {
+        ResponseEntity<?> responseEntity;
         if (service.update(giftCertificate, id)) {
-            return new ResponseEntity<>(HttpStatus.OK);
+            responseEntity = new ResponseEntity<>(HttpStatus.OK);
         } else {
             CustomError error = new CustomError(getErrorCode(400), "Error while updating");
-            return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
+            responseEntity = new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
         }
-
+        return responseEntity;
     }
 
-
-    /*//TODO replace reflection
-    @PatchMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> update(@RequestBody Map<Object, Object> fields, @PathVariable Long id) {
-        GiftCertificate certificate = service.getOne(id);
-        if (certificate != null) {
-            fields.forEach((key, value) -> {
-                Field field = ReflectionUtils.findField(GiftCertificate.class, (String) key);
-                field.setAccessible(true);
-                ReflectionUtils.setField(field, certificate, value);
-            });
-            return new ResponseEntity<>(certificate, HttpStatus.OK);
-        } else {
-            CustomError error = new CustomError(getErrorCode(400), "Error while patching");
-            return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
-        }
-
-    }
-*/
-
-
-   /* @PatchMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> update(@RequestBody GiftCertificate giftCertificate, @PathVariable Long id) {
-        if (service.update(giftCertificate, id)) {
-            return new ResponseEntity<>(HttpStatus.OK);
-        } else {
-            CustomError error = new CustomError(getErrorCode(400), "Error while updating");
-            return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
-        }
-    }*/
 
     @ExceptionHandler(GiftCertificateNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)

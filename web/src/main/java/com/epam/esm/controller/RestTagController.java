@@ -7,7 +7,6 @@ import com.epam.esm.TagService;
 import com.epam.esm.exception.NoTagsFoundException;
 import com.epam.esm.exception.TagNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -31,7 +30,7 @@ public class RestTagController {
 
     @GetMapping("/{id}")
     public Tag getTag(@PathVariable Long id) {
-        Tag tag = service.getCertificate(id);
+        Tag tag = service.getEntity(id);
         if (tag == null) {
             throw new TagNotFoundException(id);
         }
@@ -42,7 +41,7 @@ public class RestTagController {
     public List<Tag> getTags(
             @RequestParam(value = "order", defaultValue = "ASC") String order,
             @RequestParam(value = "max", defaultValue = "20") int max) {
-        List<Tag> tags = service.getAll(order, max);
+        List<Tag> tags = service.getEntities(order, max);
         if (tags.isEmpty()) {
             throw new NoTagsFoundException();
         }
@@ -63,8 +62,10 @@ public class RestTagController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
-        ResponseEntity<String> response = new ResponseEntity<>(HttpStatus.OK);
-        if (!service.delete(id)) {
+        ResponseEntity<String> response;
+        if (service.delete(id)) {
+            response = new ResponseEntity<>(HttpStatus.OK);
+        } else {
             response = new ResponseEntity<>("No tag with such id was found", HttpStatus.OK);
         }
         return response;
