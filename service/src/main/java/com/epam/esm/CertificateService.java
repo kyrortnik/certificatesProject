@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static java.util.Objects.isNull;
+
 @Service
 public class CertificateService implements CRUDService<GiftCertificate> {
 
@@ -28,6 +30,9 @@ public class CertificateService implements CRUDService<GiftCertificate> {
     }
 
     public List<GiftCertificate> getEntitiesWithParams(String order, int max, String tag, String pattern) {
+        if (!isNull(pattern)){
+            pattern = '%' + pattern + '%';
+        }
         return giftCertificateRepository.getAllWithParams(order, max, tag, pattern);
     }
 

@@ -39,7 +39,6 @@ public class RestCertificateController {
         return giftCertificate;
     }
 
-    //TODO implement this method
     @GetMapping("/")
     public List<GiftCertificate> getCertificates(
             @RequestParam(value = "order", defaultValue = DEFAULT_ORDER) String order,

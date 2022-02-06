@@ -3,6 +3,9 @@ package com.epam.esm.impl;
 import com.epam.esm.GiftCertificate;
 import com.epam.esm.GiftCertificateRepository;
 import com.epam.esm.Tag;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,15 +120,25 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
 //            "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date\n" +
 //            "ORDER BY cert.name %s LIMIT :max";
 
-    private static final String TEST_AGG = "SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date, tags.name\n" +
+    private static final String TEST_AGG = "SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date, array_to_json(array_agg(tags)) as tags\n" +
             "FROM\n" +
             "certificates AS cert\n" +
             "LEFT JOIN certificates_tags AS ct\n" +
             "ON cert.id = ct.certificate_id\n" +
             "LEFT JOIN tags\n" +
-            "ON ct.tag_id = tags.id  WHERE tags.name LIKE COALESCE(:tagName,'%%') OR (cert.name LIKE COALESCE(:pattern,'%%') OR cert.description LIKE COALESCE(:pattern,'%%'))\n" +
-            "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date, tags.name\n" +
+            "ON ct.tag_id = tags.id  WHERE  tags.name = COALESCE(:tag, tags.name) AND (cert.name LIKE COALESCE(:pattern, cert.name) OR cert.description LIKE COALESCE(:pattern, cert.description))\n" +
+            "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date\n" +
             "ORDER BY cert.name %s LIMIT :max";
+
+//    private static final String TEST_AGG = "SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date, tags.name\n" +
+//            "FROM\n" +
+//            "certificates AS cert\n" +
+//            "LEFT JOIN certificates_tags AS ct\n" +
+//            "ON cert.id = ct.certificate_id\n" +
+//            "LEFT JOIN tags\n" +
+//            "ON ct.tag_id = tags.id  WHERE tags.name LIKE COALESCE(:tagName,'%%') OR (cert.name LIKE COALESCE(:pattern,'%%') OR cert.description LIKE COALESCE(:pattern,'%%'))\n" +
+//            "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date, tags.name\n" +
+//            "ORDER BY cert.name %s LIMIT :max";
 
     private static final String TAGS_FOR_CERTIFICATES = "SELECT array_to_json(array_agg(tags)) as tags\n" +
             "FROM \n" +
@@ -150,7 +163,9 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
                     rs.getLong("price"),
                     rs.getLong("duration"),
                     LocalDateTime.parse(rs.getString("create_date").replace(" ", "T"), DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                    LocalDateTime.parse(rs.getString("last_update_date").replace(" ", "T"), DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    LocalDateTime.parse(rs.getString("last_update_date").replace(" ", "T"), DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                    tagsToList(rs.getString("tags"))
+            );
 
 
     private static final RowMapper<Tag> MAPPER_TAG =
@@ -180,28 +195,22 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
         return namedParameterJdbcTemplate.getJdbcOperations().query(String.format(GET_ALL_CERTIFICATES, order), MAPPER_GIFT_CERTIFICATE, max);
     }
 
-    //TODO use params
     @Override
     public List<GiftCertificate> getAllWithParams(String order, int max, String tag, String pattern) {
 
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("max", max);
-        paramMap.put("tagName", tag);
+        paramMap.put("tag", tag);
         paramMap.put("pattern", pattern);
 
         return namedParameterJdbcTemplate.query(String.format(TEST_AGG, order), paramMap, MAPPER_GIFT_CERTIFICATE);
 
-
-//        List<GiftCertificate> certificates =  jdbcOperations.query(String.format(GET_CERTIFICATES_WITH_PARAMS, order), MAPPER_GIFT_CERTIFICATE, tag, pattern, pattern, max);
-//        List<Tag> tags = jdbcOperations.query(TAGS_FOR_CERTIFICATES,MAPPER_TAG);
-
-//        return null;
     }
 
     @Transactional
     @Override
     public boolean delete(Long id) {
-        namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_CERTIFICATE_RELATION,id);
+        namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_CERTIFICATE_RELATION, id);
         return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_CERTIFICATE, id) > 0;
     }
 
@@ -220,16 +229,16 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
     public boolean update(GiftCertificate giftCertificate, long certificateId) {
 
         boolean result;
-        Map<String,Object> map = getParamsMap(giftCertificate);
-        map.put("id",certificateId);
-        result = namedParameterJdbcTemplate.update(UPDATE_CERTIFICATE,map) > 0;
+        Map<String, Object> map = getParamsMap(giftCertificate);
+        map.put("id", certificateId);
+        result = namedParameterJdbcTemplate.update(UPDATE_CERTIFICATE, map) > 0;
         List<Tag> tags = giftCertificate.getTags();
 
         if (!tags.isEmpty()) {
             List<String> tagNames = new ArrayList<>();
             tags.forEach((t) -> tagNames.add(t.getName()));
             createNewTags(tagNames);
-            namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_OBSOLETE_RELATIONS,certificateId);
+            namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_OBSOLETE_RELATIONS, certificateId);
             List<Integer> list = getTagIdsForNames(tagNames);
             createCertificateTagRelation((int) certificateId, list);
         }
@@ -334,4 +343,17 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
 //        return resultList;
 //
 //    }
+
+    private static List<Tag> tagsToList(String jsonTags) {
+        List<Tag> tagsList = null;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+
+            tagsList = mapper.readValue(jsonTags, new TypeReference<List<Tag>>() {
+            });
+        } catch (JsonProcessingException ex) {
+            System.out.println("JsonParcing exception");
+        }
+        return tagsList;
+    }
 }
