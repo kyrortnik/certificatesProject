@@ -1,5 +1,8 @@
-package com.epam.esm;
+package com.epam.esm.impl;
 
+import com.epam.esm.CRUDService;
+import com.epam.esm.Tag;
+import com.epam.esm.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +15,7 @@ public class TagService implements CRUDService<Tag> {
     private final TagRepository tagRepository;
 
     @Autowired
-    public TagService (TagRepository tagRepository) {
+    public TagService(TagRepository tagRepository) {
         this.tagRepository = tagRepository;
     }
 

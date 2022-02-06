@@ -1,9 +1,8 @@
 package com.epam.esm.controller;
 
-
 import com.epam.esm.CustomError;
 import com.epam.esm.Tag;
-import com.epam.esm.TagService;
+import com.epam.esm.impl.TagService;
 import com.epam.esm.exception.NoTagsFoundException;
 import com.epam.esm.exception.TagNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;

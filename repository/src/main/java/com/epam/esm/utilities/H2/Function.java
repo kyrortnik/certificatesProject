@@ -3,13 +3,11 @@ package com.epam.esm.utilities.H2;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import javax.xml.transform.Result;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Profile("dev")
@@ -36,7 +34,7 @@ public class Function {
             countRs = countStatement.executeQuery();
             if (countRs.next() && countRs.getInt(1) == 0) {
                 insertStatement = connection.prepareStatement(CREATE_TAG);
-                insertStatement.setString(1,tag);
+                insertStatement.setString(1, tag);
                 insertStatement.executeUpdate();
             }
         }
@@ -55,13 +53,8 @@ public class Function {
                 tagsIds.add(rs.getLong(1));
             }
         }
-
         return tagsIds.toArray(new Long[0]);
     }
-
-
-
-
 
 
     public static void createCertificateTagRelation(Connection connection, Long createdGiftId, List<Long> list) throws SQLException {

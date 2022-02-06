@@ -1,6 +1,6 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.CertificateService;
+import com.epam.esm.impl.CertificateService;
 import com.epam.esm.CustomError;
 import com.epam.esm.GiftCertificate;
 import com.epam.esm.exception.GiftCertificateNotFoundException;
@@ -20,7 +20,6 @@ public class RestCertificateController {
 
     private static final String MAX_CERTIFICATES_IN_REQUEST = "20";
     private static final String DEFAULT_ORDER = "ASC";
-
 
     private final CertificateService service;
 

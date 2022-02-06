@@ -1,5 +1,6 @@
 package com.epam.esm;
 
+import com.epam.esm.impl.CertificateService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 

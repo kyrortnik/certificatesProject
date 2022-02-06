@@ -16,7 +16,7 @@ import java.util.List;
 public class TagRepositoryJDBC implements TagRepository {
 
 
-    private static final String FIND_TAG = "SELECT id,name FROM tags WHERE id = ? LIMIT 1";
+    private static final String GET_TAG = "SELECT id,name FROM tags WHERE id = ? LIMIT 1";
 
     private static final String GET_TAGS = "SELECT id, name FROM tags ORDER BY name %s LIMIT ?";
 
@@ -42,7 +42,7 @@ public class TagRepositoryJDBC implements TagRepository {
 
     @Override
     public Tag getTag(Long id) {
-        return namedParameterJdbcTemplate.getJdbcOperations().query(FIND_TAG, rs -> rs.next() ? MAPPER_TAG.mapRow(rs, 1) : null, id);
+        return namedParameterJdbcTemplate.getJdbcOperations().query(GET_TAG, rs -> rs.next() ? MAPPER_TAG.mapRow(rs, 1) : null, id);
     }
 
 

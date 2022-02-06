@@ -1,5 +1,8 @@
-package com.epam.esm;
+package com.epam.esm.impl;
 
+import com.epam.esm.CRUDService;
+import com.epam.esm.GiftCertificate;
+import com.epam.esm.GiftCertificateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +15,7 @@ import static java.util.Objects.isNull;
 public class CertificateService implements CRUDService<GiftCertificate> {
 
     @Autowired
-    private GiftCertificateRepository giftCertificateRepository;
+    private final GiftCertificateRepository giftCertificateRepository;
 
     public CertificateService(GiftCertificateRepository giftCertificateRepository){
         this.giftCertificateRepository = giftCertificateRepository;
@@ -50,7 +53,6 @@ public class CertificateService implements CRUDService<GiftCertificate> {
 
     @Override
     public GiftCertificate create(GiftCertificate giftCertificate) {
-
         giftCertificate.setCreateDate(LocalDateTime.now());
         giftCertificate.setLastUpdateDate(LocalDateTime.now());
         return giftCertificateRepository.create(giftCertificate);
