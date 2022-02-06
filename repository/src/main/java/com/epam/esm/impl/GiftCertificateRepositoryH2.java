@@ -6,12 +6,15 @@ import com.epam.esm.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -102,6 +105,8 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
             "GROUP BY cert.id, tags.id\n" +
             "ORDER BY cert.id ASC";
 
+    private static final String DELETE_OBSOLETE_RELATIONS = "DELETE FROM certificates_tags WHERE certificate_id = ?";
+
     private static final String CREATE_NEW_TAGS_CALL = "CALL create_new_tags(?)";
 
     private static final String GET_TAGS_IDS = "CALL get_tags_ids(?)";
@@ -168,16 +173,37 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
     public boolean delete(Long id) {
         return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_CERTIFICATE, id) > 0;
     }
-  //TODO - refactor as in JDBC
+//  //TODO - refactor as in JDBC
+//    @Override
+//    public boolean update(GiftCertificate giftCertificate, long id) {
+//
+//        GiftCertificate existingCertificate = getCertificate(id);
+//        updateExistingCertificate(giftCertificate, existingCertificate);
+//
+//        Map<String, Object> map = getParamsMap(existingCertificate);
+//        map.put("id", id);
+//        return namedParameterJdbcTemplate.update(UPDATE_CERTIFICATE, map) > 0;
+//    }
+
+
     @Override
-    public boolean update(GiftCertificate giftCertificate, long id) {
+    public boolean update(GiftCertificate giftCertificate, long certificateId) {
 
-        GiftCertificate existingCertificate = getCertificate(id);
-        updateExistingCertificate(giftCertificate, existingCertificate);
+        boolean result;
+        Map<String,Object> map = getParamsMap(giftCertificate);
+        map.put("id",certificateId);
+        result = namedParameterJdbcTemplate.update(UPDATE_CERTIFICATE,map) > 0;
+        List<Tag> tags = giftCertificate.getTags();
 
-        Map<String, Object> map = getParamsMap(existingCertificate);
-        map.put("id", id);
-        return namedParameterJdbcTemplate.update(UPDATE_CERTIFICATE, map) > 0;
+        if (!tags.isEmpty()) {
+            List<String> tagNames = new ArrayList<>();
+            tags.forEach((t) -> tagNames.add(t.getName()));
+            createNewTags(tagNames);
+            namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_OBSOLETE_RELATIONS,certificateId);
+            List<Integer> list = getTagIdsForNames(tagNames);
+            createCertificateTagRelation((int) certificateId, list);
+        }
+        return result;
     }
 
     private void updateExistingCertificate(GiftCertificate updateCertificate, GiftCertificate existingCertificate) {
@@ -206,6 +232,59 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
         }
         return getCertificate(createdGiftCertificateId);
     }
+
+
+
+//    @Transactional
+//    @Override
+//    public GiftCertificate create(GiftCertificate giftCertificate) {
+//
+//        BeanPropertySqlParameterSource source = new BeanPropertySqlParameterSource(giftCertificate);
+//        long createdGiftCertificateId = (Integer) simpleJdbcInsert.executeAndReturnKey(source);
+//        List<Tag> tags = giftCertificate.getTags();
+//
+//        if (!tags.isEmpty()) {
+//            List<String> tagNames = new ArrayList<>();
+//            tags.forEach((t) -> tagNames.add(t.getName()));
+//            createNewTags(tagNames);
+//            List<Integer> list = getTagIdsForNames(tagNames);
+//            createCertificateTagRelation((int) createdGiftCertificateId, list);
+//        }
+//        return getCertificate(createdGiftCertificateId);
+//    }
+
+
+    private void createNewTags(List<String> tagNames) {
+        List<SqlParameter> parameters = new ArrayList<>();
+        namedParameterJdbcTemplate.getJdbcOperations().call(con -> {
+                    CallableStatement cs = con.prepareCall(CREATE_NEW_TAGS_CALL);
+                    cs.setArray(1, con.createArrayOf("varchar", tagNames.toArray()));
+                    return cs;
+                },
+                parameters
+        );
+    }
+
+    private List<Integer> getTagIdsForNames(List<String> tagNames) {
+        return namedParameterJdbcTemplate.getJdbcOperations().query(con -> {
+                    PreparedStatement ps = con.prepareStatement(GET_TAGS_IDS);
+                    ps.setArray(1, con.createArrayOf("varchar", tagNames.toArray()));
+                    return ps;
+                }, MAPPER_ID
+        );
+    }
+
+    private void createCertificateTagRelation(int createdGiftId, List<Integer> list) {
+        List<SqlParameter> parameters = new ArrayList<>();
+        namedParameterJdbcTemplate.getJdbcOperations().call(con -> {
+                    CallableStatement cs = con.prepareCall(CREATE_CERTIFICATE_TAG_RELATION);
+                    cs.setArray(1, con.createArrayOf("integer", list.toArray()));
+                    cs.setInt(2, createdGiftId);
+                    return cs;
+                }, parameters
+        );
+    }
+
 
 
 //    private void createNewTags(List<String> tagNames) {

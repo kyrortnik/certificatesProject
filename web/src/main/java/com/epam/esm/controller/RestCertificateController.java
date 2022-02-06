@@ -64,13 +64,13 @@ public class RestCertificateController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
-        ResponseEntity<String> responseEntity;
+        ResponseEntity<String> response;
         if (service.delete(id)) {
-            responseEntity = new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            response = new ResponseEntity<>(HttpStatus.OK);
         } else {
-            responseEntity = new ResponseEntity<>("Certificate " + id + " doesn't exist", HttpStatus.OK);
+            response = new ResponseEntity<>("No certificate with such id was found", HttpStatus.OK);
         }
-        return responseEntity;
+        return response;
     }
 
 

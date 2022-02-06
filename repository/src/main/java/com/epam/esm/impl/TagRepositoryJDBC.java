@@ -20,17 +20,13 @@ public class TagRepositoryJDBC implements TagRepository {
 
     private static final String GET_TAGS = "SELECT id, name FROM tags ORDER BY name %s LIMIT ?";
 
-    private static final String DELETE_TAGS =
-            "DELETE FROM certificates_tags WHERE tag_id = ?;\n" +
-                    "DELETE FROM tags WHERE id = ?;";
+    private static final String DELETE_TAGS = "DELETE FROM tags WHERE id = ?";
+
+    private static final String DELETE_TAG_RELATIONS = "DELETE FROM certificates_tags WHERE tag_id = ?";
 
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsert;
-
-
-//    private static final RowMapper<Long> MAPPER_LOG =
-//            (rs, i) -> rs.getLong(1);
 
 
     private static final RowMapper<Tag> MAPPER_TAG =
@@ -41,7 +37,7 @@ public class TagRepositoryJDBC implements TagRepository {
     @Autowired
     public TagRepositoryJDBC(NamedParameterJdbcTemplate namedParameterJdbcTemplate, SimpleJdbcInsert simpleJdbcInsert) {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
-        this.simpleJdbcInsert =  simpleJdbcInsert.withTableName("tags").usingGeneratedKeyColumns("id");;
+        this.simpleJdbcInsert = simpleJdbcInsert.withTableName("tags").usingGeneratedKeyColumns("id");
     }
 
     @Override
@@ -55,16 +51,18 @@ public class TagRepositoryJDBC implements TagRepository {
         return namedParameterJdbcTemplate.getJdbcOperations().query(String.format(GET_TAGS, order), MAPPER_TAG, max);
     }
 
+    @Transactional
     @Override
     public boolean delete(Long id) {
-        return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_TAGS, id, id) > 0;
+        namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_TAG_RELATIONS, id);
+        return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_TAGS, id) > 0;
     }
 
     @Override
     @Transactional
     public Tag create(Tag tag) {
         BeanPropertySqlParameterSource source = new BeanPropertySqlParameterSource(tag);
-        long createdTagId = (Integer)simpleJdbcInsert.executeAndReturnKey(source);
+        long createdTagId = (Integer) simpleJdbcInsert.executeAndReturnKey(source);
         return getTag(createdTagId);
     }
 

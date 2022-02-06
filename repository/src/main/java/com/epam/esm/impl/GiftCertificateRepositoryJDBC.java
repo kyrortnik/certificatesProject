@@ -47,11 +47,18 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
     private static final String INSERT_CERTIFICATE = "INSERT INTO certificates (id, name, description, price, duration, create_date, last_update_date)" +
             "VALUES (DEFAULT, :name, :description, :price, :duration, :create_date, :last_update_date)";
 
+    private static final String DELETE_CERTIFICATE_RELATION = "DELETE FROM certificates_tags WHERE certificate_id = ?";
+
     private static final String DELETE_CERTIFICATE = " DELETE FROM certificates WHERE id = ? ";
 
-    private static final String UPDATE_CERTIFICATE = "UPDATE certificates " +
-            "SET name = :name, description = :description, price = :price, duration = :duration, create_date = :create_date, last_update_date = :last_update_date\n" +
-            "WHERE id = :id;";
+//    private static final String UPDATE_CERTIFICATE = "UPDATE certificates " +
+//            "SET name = :name, description = :description, price = :price, duration = :duration, create_date = :create_date, last_update_date = :last_update_date\n" +
+//            "WHERE id = :id;";
+
+    private static final String UPDATE_CERTIFICATE = "UPDATE certificates \n" +
+            "SET name = COALESCE(:name, name), description = COALESCE(:description, description), price = COALESCE(:price, price),\n" +
+            "duration = COALESCE(:duration, duration), create_date = COALESCE(:create_date, create_date), last_update_date = COALESCE(:last_update_date,last_update_date) \n" +
+            "WHERE id = :id";
 
     private static final String GET_ALL_CERTIFICATES = "SELECT id, name,description, price, duration, create_date, last_update_date FROM certificates ORDER BY name %s LIMIT ?";
 
@@ -64,6 +71,8 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
     private static final String TAGS_FOR_CERTIFICATE = "SELECT tags.id, tags.name FROM tags\n" +
             "  LEFT OUTER JOIN certificates_tags AS ct ON tags.id = ct.tag_id\n" +
             "  LEFT OUTER JOIN certificates AS cert ON ct.certificate_id = cert.id WHERE cert.id = ?";
+
+    private static final String DELETE_OBSOLETE_RELATIONS = "DELETE FROM certificates_tags WHERE certificate_id = ?";
 
 
 //    private static final String TEST_AGG =
@@ -177,8 +186,8 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
 
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("max", max);
-        paramMap.put("tagName",tag);
-        paramMap.put("pattern",pattern);
+        paramMap.put("tagName", tag);
+        paramMap.put("pattern", pattern);
 
         return namedParameterJdbcTemplate.query(String.format(TEST_AGG, order), paramMap, MAPPER_GIFT_CERTIFICATE);
 
@@ -189,8 +198,10 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
 //        return null;
     }
 
+    @Transactional
     @Override
     public boolean delete(Long id) {
+        namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_CERTIFICATE_RELATION,id);
         return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_CERTIFICATE, id) > 0;
     }
 
@@ -206,19 +217,21 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
     }*/
 
     @Override
-    public boolean update(GiftCertificate giftCertificate, long id) {
+    public boolean update(GiftCertificate giftCertificate, long certificateId) {
 
         boolean result;
-        BeanPropertySqlParameterSource source = new BeanPropertySqlParameterSource(giftCertificate);
-        result = simpleJdbcInsert.execute(source) > 0;
+        Map<String,Object> map = getParamsMap(giftCertificate);
+        map.put("id",certificateId);
+        result = namedParameterJdbcTemplate.update(UPDATE_CERTIFICATE,map) > 0;
         List<Tag> tags = giftCertificate.getTags();
 
         if (!tags.isEmpty()) {
             List<String> tagNames = new ArrayList<>();
             tags.forEach((t) -> tagNames.add(t.getName()));
             createNewTags(tagNames);
+            namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_OBSOLETE_RELATIONS,certificateId);
             List<Integer> list = getTagIdsForNames(tagNames);
-            createCertificateTagRelation((int) id, list);
+            createCertificateTagRelation((int) certificateId, list);
         }
         return result;
     }
@@ -284,16 +297,16 @@ public class GiftCertificateRepositoryJDBC implements GiftCertificateRepository 
     }
 
 
-//    private Map<String, Object> getParamsMap(GiftCertificate giftCertificate) {
-//        Map<String, Object> map = new HashMap<>();
-//        map.put("name", giftCertificate.getName());
-//        map.put("description", giftCertificate.getDescription());
-//        map.put("price", giftCertificate.getPrice());
-//        map.put("duration", giftCertificate.getDuration());
-//        map.put("create_date", giftCertificate.getCreateDate());
-//        map.put("last_update_date", giftCertificate.getLastUpdateDate());
-//        return map;
-//    }
+    private Map<String, Object> getParamsMap(GiftCertificate giftCertificate) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", giftCertificate.getName());
+        map.put("description", giftCertificate.getDescription());
+        map.put("price", giftCertificate.getPrice());
+        map.put("duration", giftCertificate.getDuration());
+        map.put("create_date", giftCertificate.getCreateDate());
+        map.put("last_update_date", giftCertificate.getLastUpdateDate());
+        return map;
+    }
 //
 //    private Object[] getParams(GiftCertificate giftCertificate) {
 //        return new Object[]{
