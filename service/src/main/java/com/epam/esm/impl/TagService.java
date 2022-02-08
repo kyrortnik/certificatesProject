@@ -45,4 +45,9 @@ public class TagService implements CRUDService<Tag> {
         throw new UnsupportedOperationException();
     }
 
+
+    public List<Tag> getTagsForCertificate(Long id){
+        return tagRepository.getTagsForCertificate(id);
+    }
+
 }

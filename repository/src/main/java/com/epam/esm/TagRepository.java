@@ -11,4 +11,6 @@ public interface TagRepository {
     boolean delete(Long id);
 
     Tag create(Tag element);
+
+    List<Tag> getTagsForCertificate(Long id);
 }

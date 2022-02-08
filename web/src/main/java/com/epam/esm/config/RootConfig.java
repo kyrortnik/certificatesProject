@@ -1,4 +1,4 @@
-package com.epam.esm.configs;
+package com.epam.esm.config;
 
 import org.apache.commons.dbcp.BasicDataSource;
 import org.springframework.context.annotation.*;
@@ -11,7 +11,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import javax.sql.DataSource;
 
 @Configuration
-@ComponentScan(basePackages = {"beans", "com.epam.esm.beans"},
+@ComponentScan(basePackages = "com.epam.esm",
         excludeFilters = {
                 @ComponentScan.Filter(type = FilterType.ANNOTATION, value = EnableWebMvc.class)
         })

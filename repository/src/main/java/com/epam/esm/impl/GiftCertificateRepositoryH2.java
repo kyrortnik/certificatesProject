@@ -19,8 +19,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static java.util.Objects.isNull;
-
 @Profile("dev")
 @Repository
 public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
@@ -35,77 +33,39 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
         this.simpleJdbcInsert = simpleJdbcInsert.withTableName("certificates").usingGeneratedKeyColumns("id");
     }
 
-    private static final String FIND_ONE = "SELECT id,name, description, price, duration, cast(create_date AS TIMESTAMP(4)) as create_date, cast(last_update_date  AS TIMESTAMP(4)) as last_update_date FROM certificates WHERE id = ? LIMIT 1";
 
+    static final String GET_CERTIFICATE = "SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date,\n" +
+            "cert.last_update_date\n" +
+            "FROM certificates as cert\n" +
+            "LEFT JOIN certificates_tags AS ct\n" +
+            "ON cert.id = ct.certificate_id\n" +
+            "LEFT JOIN tags\n" +
+            "ON ct.tag_id = tags.id  WHERE cert.id = ? \n" +
+            "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date\n" +
+            "ORDER BY cert.name ASC LIMIT 1";
 
+    private static final String GET_CERTIFICATES = "SELECT id, name,description, price, duration, create_date, last_update_date FROM certificates ORDER BY name %s LIMIT ?";
 
-    private static final String INSERT_CERTIFICATE = "INSERT INTO certificates (id, name, description, price, duration, create_date, last_update_date)" +
-            "VALUES (DEFAULT, :name, :description, :price, :duration, :create_date, :last_update_date)";
+    private static final String GET_CERTIFICATES_WITH_PARAMS =
+            "SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date\n" +
+                    "FROM\n" +
+                    "certificates AS cert\n" +
+                    "LEFT JOIN certificates_tags AS ct\n" +
+                    "ON cert.id = ct.certificate_id\n" +
+                    "LEFT JOIN tags\n" +
+                    "ON ct.tag_id = tags.id  WHERE  tags.name = COALESCE(:tag, tags.name) AND (cert.name LIKE COALESCE(:pattern, cert.name) OR cert.description LIKE COALESCE(:pattern, cert.description))\n" +
+                    "GROUP BY cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date\n" +
+                    "ORDER BY cert.name %s LIMIT :max";
+
+    private static final String UPDATE_CERTIFICATE = "UPDATE certificates \n" +
+            "SET name = COALESCE(:name, name), description = COALESCE(:description, description), price = COALESCE(:price, price),\n" +
+            "duration = COALESCE(:duration, duration), create_date = COALESCE(:create_date, create_date), last_update_date = COALESCE(:last_update_date,last_update_date) \n" +
+            "WHERE id = :id";
 
     private static final String DELETE_CERTIFICATE = " DELETE FROM certificates WHERE id = ? ";
 
-    private static final String UPDATE_CERTIFICATE = "UPDATE certificates " +
-            "SET name = :name, description = :description, price = :price, duration = :duration, create_date = :create_date, last_update_date = :last_update_date\n" +
-            "WHERE id = :id;";
-
-    private static final String GET_ALL_CERTIFICATES = "SELECT id, name,description, price, duration, create_date, last_update_date FROM certificates ORDER BY name %s LIMIT ?";
-
-
-    private static final String GET_CERTIFICATES_WITH_PARAMS =
-            "SELECT  cert.id,  cert.name,  cert.description,  cert.price,  cert.duration,  cert.create_date,  cert.last_update_date, tags.id, tags.name FROM certificates AS cert\n" +
-                    "LEFT OUTER JOIN certificates_tags  AS ct ON cert.id =  ct.certificate_id\n" +
-                    "LEFT OUTER JOIN tags ON ct.tag_id = tags.id WHERE tags.name = ? AND cert.name LIKE ? OR cert.description LIKE ? ORDER BY cert.name %s LIMIT ?";
-
-    private static final String TAGS_FOR_CERTIFICATE = "SELECT tags.id, tags.name FROM tags\n" +
-            "  LEFT OUTER JOIN certificates_tags AS ct ON tags.id = ct.tag_id\n" +
-            "  LEFT OUTER JOIN certificates AS cert ON ct.certificate_id = cert.id WHERE cert.id = ?";
-
-    private static final String GET_CREATED_CERTIFICATE_ID = " SELECT currval('certificates_id_seq');";
-
-//    private static final String TEST_AGG =
-//            "SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date,\n" +
-//                    "array_to_json(array_agg(tags)) as tags\n" +
-//                    "FROM \n" +
-//                    "certificates AS cert \n" +
-//                    "LEFT JOIN certificates_tags AS ct \n" +
-//                    "ON cert.id = ct.certificate_id\n" +
-//                    "LEFT JOIN tags \n" +
-//                    "ON ct.tag_id = tags.id\n" +
-//                    "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date\n" +
-//                    "ORDER BY cert.id ASC";
-
-
-    private static final String TEST_AGG = "(SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date, to_jsonb(array_agg(tags)) as tags\n" +
-            "FROM\n" +
-            "certificates AS cert\n" +
-            "LEFT JOIN certificates_tags AS ct\n" +
-            "ON cert.id = ct.certificate_id\n" +
-            "LEFT JOIN tags\n" +
-            "ON ct.tag_id = tags.id  WHERE  cert.name =:tagName\n" +
-            "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date)\n" +
-            "UNION\n" +
-            "(SELECT cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date,\n" +
-            "to_jsonb(array_agg(tags)) as tags\n" +
-            "FROM\n" +
-            "certificates AS cert\n" +
-            "LEFT JOIN certificates_tags AS ct\n" +
-            "ON cert.id = ct.certificate_id\n" +
-            "LEFT JOIN tags\n" +
-            "ON ct.tag_id = tags.id  WHERE  cert.name SIMILAR TO :pattern OR cert.description SIMILAR TO :pattern\n" +
-            "GROUP BY cert.id, cert.name,cert.description,cert.price,cert.duration,cert.create_date, cert.last_update_date\n" +
-            "ORDER BY cert.name %s LIMIT :max)" ;
-
-    private static final String TAGS_FOR_CERTIFICATES = "SELECT array_to_json(array_agg(tags)) as tags\n" +
-            "FROM \n" +
-            "certificates AS cert \n" +
-            "LEFT JOIN certificates_tags AS ct \n" +
-            "ON cert.id = ct.certificate_id\n" +
-            "LEFT JOIN tags \n" +
-            "ON ct.tag_id = tags.id \n" +
-            "GROUP BY cert.id, tags.id\n" +
-            "ORDER BY cert.id ASC";
-
     private static final String DELETE_OBSOLETE_RELATIONS = "DELETE FROM certificates_tags WHERE certificate_id = ?";
+
 
     private static final String CREATE_NEW_TAGS_CALL = "CALL create_new_tags(?)";
 
@@ -121,14 +81,8 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
                     rs.getLong("price"),
                     rs.getLong("duration"),
                     LocalDateTime.parse(rs.getString("create_date").replace( " ", "T" ) , DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                    LocalDateTime.parse(rs.getString("last_update_date").replace( " ", "T" ), DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-
-
-
-    private static final RowMapper<Tag> MAPPER_TAG =
-            (rs, i) -> new Tag(
-                    rs.getLong("id"),
-                    rs.getString("name"));
+                    LocalDateTime.parse(rs.getString("last_update_date").replace( " ", "T" ), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                  );
 
     private static final RowMapper<Integer> MAPPER_ID =
             (rs, i) -> rs.getInt(1);
@@ -137,61 +91,41 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
     @Override
     public GiftCertificate getCertificate(Long id) {
 
-        GiftCertificate giftCertificate = namedParameterJdbcTemplate.getJdbcOperations().query(FIND_ONE, rs -> rs.next() ? MAPPER_GIFT_CERTIFICATE.mapRow(rs, 1) : null, id);
-        List<Tag> tags = namedParameterJdbcTemplate.getJdbcOperations().query(TAGS_FOR_CERTIFICATE, MAPPER_TAG, id);
-
-        if (giftCertificate != null) {
-            giftCertificate.setTags(tags);
-        }
-        return giftCertificate;
+        return namedParameterJdbcTemplate.getJdbcOperations().query(GET_CERTIFICATE, rs -> rs.next() ? MAPPER_GIFT_CERTIFICATE.mapRow(rs, 1) : null, id);
     }
 
-    //TODO Deprecated
     @Override
     public List<GiftCertificate> getCertificates(String order, int max) {
 
-        return namedParameterJdbcTemplate.getJdbcOperations().query(String.format(GET_ALL_CERTIFICATES, order), MAPPER_GIFT_CERTIFICATE, max);
+        return namedParameterJdbcTemplate.getJdbcOperations().query(String.format(GET_CERTIFICATES, order), MAPPER_GIFT_CERTIFICATE, max);
     }
 
-    //TODO use params
     @Override
-    public List<GiftCertificate> getAllWithParams(String order, int max, String tag, String pattern) {
+    public List<GiftCertificate> getCertificatesWithParams(String order, int max, String tag, String pattern) {
 
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("max", max);
+        paramMap.put("tag", tag);
+        paramMap.put("pattern", pattern);
 
+        return namedParameterJdbcTemplate.query(String.format(GET_CERTIFICATES_WITH_PARAMS, order), paramMap, MAPPER_GIFT_CERTIFICATE);
 
-
-        return namedParameterJdbcTemplate.query(TEST_AGG, MAPPER_GIFT_CERTIFICATE);
-
-
-//        List<GiftCertificate> certificates =  jdbcOperations.query(String.format(GET_CERTIFICATES_WITH_PARAMS, order), MAPPER_GIFT_CERTIFICATE, tag, pattern, pattern, max);
-//        List<Tag> tags = jdbcOperations.query(TAGS_FOR_CERTIFICATES,MAPPER_TAG);
-
-//        return null;
     }
 
+
+    @Transactional
     @Override
     public boolean delete(Long id) {
+        namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_OBSOLETE_RELATIONS, id);
         return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_CERTIFICATE, id) > 0;
     }
-//  //TODO - refactor as in JDBC
-//    @Override
-//    public boolean update(GiftCertificate giftCertificate, long id) {
-//
-//        GiftCertificate existingCertificate = getCertificate(id);
-//        updateExistingCertificate(giftCertificate, existingCertificate);
-//
-//        Map<String, Object> map = getParamsMap(existingCertificate);
-//        map.put("id", id);
-//        return namedParameterJdbcTemplate.update(UPDATE_CERTIFICATE, map) > 0;
-//    }
 
 
     @Override
     public boolean update(GiftCertificate giftCertificate, long certificateId) {
 
         boolean result;
-        Map<String,Object> map = getParamsMap(giftCertificate);
-        map.put("id",certificateId);
+        Map<String,Object> map = getParamsMap(giftCertificate,certificateId);
         result = namedParameterJdbcTemplate.update(UPDATE_CERTIFICATE,map) > 0;
         List<Tag> tags = giftCertificate.getTags();
 
@@ -206,14 +140,6 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
         return result;
     }
 
-    private void updateExistingCertificate(GiftCertificate updateCertificate, GiftCertificate existingCertificate) {
-        existingCertificate.setName(isNull(updateCertificate.getName()) ? existingCertificate.getName() : updateCertificate.getName());
-        existingCertificate.setDescription(isNull(updateCertificate.getDescription()) ? existingCertificate.getDescription() : updateCertificate.getDescription());
-        existingCertificate.setPrice(isNull(updateCertificate.getPrice()) ? existingCertificate.getPrice() : updateCertificate.getPrice());
-        existingCertificate.setDuration(isNull(updateCertificate.getDuration()) ? existingCertificate.getDuration() : updateCertificate.getDuration());
-        existingCertificate.setCreateDate(isNull(updateCertificate.getCreateDate()) ? existingCertificate.getCreateDate() : updateCertificate.getCreateDate());
-        existingCertificate.setLastUpdateDate(isNull(updateCertificate.getLastUpdateDate()) ? existingCertificate.getLastUpdateDate() : updateCertificate.getLastUpdateDate());
-    }
 
     @Transactional
     @Override
@@ -233,25 +159,6 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
         return getCertificate(createdGiftCertificateId);
     }
 
-
-
-//    @Transactional
-//    @Override
-//    public GiftCertificate create(GiftCertificate giftCertificate) {
-//
-//        BeanPropertySqlParameterSource source = new BeanPropertySqlParameterSource(giftCertificate);
-//        long createdGiftCertificateId = (Integer) simpleJdbcInsert.executeAndReturnKey(source);
-//        List<Tag> tags = giftCertificate.getTags();
-//
-//        if (!tags.isEmpty()) {
-//            List<String> tagNames = new ArrayList<>();
-//            tags.forEach((t) -> tagNames.add(t.getName()));
-//            createNewTags(tagNames);
-//            List<Integer> list = getTagIdsForNames(tagNames);
-//            createCertificateTagRelation((int) createdGiftCertificateId, list);
-//        }
-//        return getCertificate(createdGiftCertificateId);
-//    }
 
 
     private void createNewTags(List<String> tagNames) {
@@ -285,35 +192,7 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
         );
     }
 
-
-
-//    private void createNewTags(List<String> tagNames) {
-//
-//        namedParameterJdbcTemplate.query(CREATE_NEW_TAGS_CALL,)
-//    }
-
-//    private List<Integer> getTagIdsForNames(List<String> tagNames) {
-//        return namedParameterJdbcTemplate.getJdbcOperations().query(con -> {
-//                    PreparedStatement ps = con.prepareStatement(GET_TAGS_IDS);
-//                    ps.setArray(1, con.createArrayOf("varchar", tagNames.toArray()));
-//                    return ps;
-//                }, MAPPER_ID
-//        );
-//    }
-
-//    private void createCertificateTagRelation(int createdGiftId, List<Integer> list) {
-//        List<SqlParameter> parameters = new ArrayList<>();
-//        namedParameterJdbcTemplate.getJdbcOperations().call(con -> {
-//                    CallableStatement cs = con.prepareCall(CREATE_CERTIFICATE_TAG_RELATION);
-//                    cs.setArray(1, con.createArrayOf("integer", list.toArray()));
-//                    cs.setInt(2, createdGiftId);
-//                    return cs;
-//                }, parameters
-//        );
-//    }
-
-
-    private Map<String, Object> getParamsMap(GiftCertificate giftCertificate) {
+    private Map<String, Object> getParamsMap(GiftCertificate giftCertificate,long certificateId) {
         Map<String, Object> map = new HashMap<>();
         map.put("name", giftCertificate.getName());
         map.put("description", giftCertificate.getDescription());
@@ -321,6 +200,8 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
         map.put("duration", giftCertificate.getDuration());
         map.put("create_date", giftCertificate.getCreateDate());
         map.put("last_update_date", giftCertificate.getLastUpdateDate());
+        map.put("id",certificateId);
         return map;
     }
+
 }

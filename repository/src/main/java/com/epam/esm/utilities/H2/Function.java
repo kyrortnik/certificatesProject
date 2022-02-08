@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-@Profile("dev")
+//@Profile("dev")
 @Component
 public class Function {
 

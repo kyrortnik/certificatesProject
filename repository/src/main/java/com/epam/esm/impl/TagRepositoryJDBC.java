@@ -20,6 +20,13 @@ public class TagRepositoryJDBC implements TagRepository {
 
     private static final String GET_TAGS = "SELECT id, name FROM tags ORDER BY name %s LIMIT ?";
 
+    private static final String GET_TAGS_FOR_CERTIFICATE =
+            "SELECT tags.id, tags.name FROM tags\n" +
+                    "LEFT JOIN certificates_tags AS ct\n" +
+                    "ON tags.id = ct.tag_id\n" +
+                    "LEFT JOIN certificates AS cert\n" +
+                    "ON ct.certificate_id = cert.id WHERE cert.id = ?";
+
     private static final String DELETE_TAGS = "DELETE FROM tags WHERE id = ?";
 
     private static final String DELETE_TAG_RELATIONS = "DELETE FROM certificates_tags WHERE tag_id = ?";
@@ -66,4 +73,9 @@ public class TagRepositoryJDBC implements TagRepository {
         return getTag(createdTagId);
     }
 
+    @Override
+    public List<Tag> getTagsForCertificate(Long id) {
+
+        return namedParameterJdbcTemplate.getJdbcOperations().query(GET_TAGS_FOR_CERTIFICATE, MAPPER_TAG, id);
+    }
 }

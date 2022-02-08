@@ -1,6 +1,7 @@
 package com.epam.esm;
 
 import com.epam.esm.impl.CertificateService;
+import com.epam.esm.impl.TagService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -16,9 +17,10 @@ class CertificateServiceTest {
 
     //mock
     private final GiftCertificateRepository giftCertificateRepository = Mockito.mock(GiftCertificateRepository.class, withSettings().verboseLogging());
+    private final TagService tagService = Mockito.mock(TagService.class, withSettings().verboseLogging());
 
     //class under test
-    private final CertificateService giftCertificateService = new CertificateService(giftCertificateRepository);
+    private final CertificateService giftCertificateService = new CertificateService(giftCertificateRepository,tagService);
 
     //params
     private final long giftCertificateId = 1L;
@@ -31,11 +33,13 @@ class CertificateServiceTest {
 
     private final String order = "ASC";
     private final int max = 20;
+    private final String tag = "tagName";
+    private final String pattern = "pattern";
 
     private final List<GiftCertificate> giftCertificates = Arrays.asList(
-            new GiftCertificate(1L, "first certificcate", "first description", 100L, 120L, LocalDateTime.now(), LocalDateTime.now()),
-            new GiftCertificate(2L, "second certificcate", "second description", 300L, 30L, LocalDateTime.now(), LocalDateTime.now()),
-            new GiftCertificate(1L, "second certificcate", "second description", 500L, 90L, LocalDateTime.now(), LocalDateTime.now())
+            new GiftCertificate(1L, "first certificate", "first description", 100L, 120L, LocalDateTime.now(), LocalDateTime.now()),
+            new GiftCertificate(2L, "second certificate", "second description", 300L, 30L, LocalDateTime.now(), LocalDateTime.now()),
+            new GiftCertificate(3L, "third certificate", "third description", 500L, 90L, LocalDateTime.now(), LocalDateTime.now())
 
     );
 
@@ -50,10 +54,12 @@ class CertificateServiceTest {
         GiftCertificate giftCertificate = new GiftCertificate(giftCertificateId, name, description, price, duration, createDate, lastUpdateDate, tags);
 
         when(giftCertificateRepository.getCertificate(giftCertificateId)).thenReturn(giftCertificate);
+        when(tagService.getTagsForCertificate(giftCertificateId)).thenReturn(tags);
 
         GiftCertificate returnGiftCertificate = giftCertificateService.getEntity(giftCertificateId);
 
         verify(giftCertificateRepository).getCertificate(giftCertificateId);
+        verify(tagService).getTagsForCertificate(giftCertificateId);
         assertEquals(giftCertificate, returnGiftCertificate);
 
     }
@@ -69,9 +75,20 @@ class CertificateServiceTest {
         assertEquals(giftCertificates, returnCertificates);
     }
 
-    //TODO  implement this test after method itself is implemented
     @Test
-    void getEntitiesWithParams() {
+    void getEntitiesWithParams_positive() {
+        String processedPattern = '%' + pattern + '%';
+
+        when(giftCertificateRepository.getCertificatesWithParams(order,max, tag, processedPattern)).thenReturn(giftCertificates);
+        when(tagService.getTagsForCertificate(giftCertificateId)).thenReturn(tags);
+
+        List<GiftCertificate> returnCertificates = giftCertificateService.getEntitiesWithParams(order,max, tag, pattern);
+
+        verify(giftCertificateRepository).getCertificatesWithParams(order, max, tag, processedPattern);
+        verify(tagService).getTagsForCertificate(giftCertificateId);
+        assertEquals(giftCertificates,returnCertificates);
+
+
     }
 
     @Test
