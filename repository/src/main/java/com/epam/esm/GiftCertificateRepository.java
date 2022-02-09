@@ -8,7 +8,7 @@ public interface GiftCertificateRepository {
 
     List<GiftCertificate> getCertificates(String order, int max);
 
-    List<GiftCertificate> getAllWithParams(String order, int max, String tag, String pattern);
+    List<GiftCertificate> getCertificatesWithParams(String order, int max, String tag, String pattern);
 
     boolean delete(Long id);
 

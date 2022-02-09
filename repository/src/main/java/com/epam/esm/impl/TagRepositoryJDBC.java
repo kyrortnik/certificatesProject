@@ -16,9 +16,16 @@ import java.util.List;
 public class TagRepositoryJDBC implements TagRepository {
 
 
-    private static final String FIND_TAG = "SELECT id,name FROM tags WHERE id = ? LIMIT 1";
+    private static final String GET_TAG = "SELECT id,name FROM tags WHERE id = ? LIMIT 1";
 
     private static final String GET_TAGS = "SELECT id, name FROM tags ORDER BY name %s LIMIT ?";
+
+    private static final String GET_TAGS_FOR_CERTIFICATE =
+            "SELECT tags.id, tags.name FROM tags\n" +
+                    "LEFT JOIN certificates_tags AS ct\n" +
+                    "ON tags.id = ct.tag_id\n" +
+                    "LEFT JOIN certificates AS cert\n" +
+                    "ON ct.certificate_id = cert.id WHERE cert.id = ?";
 
     private static final String DELETE_TAGS = "DELETE FROM tags WHERE id = ?";
 
@@ -42,7 +49,7 @@ public class TagRepositoryJDBC implements TagRepository {
 
     @Override
     public Tag getTag(Long id) {
-        return namedParameterJdbcTemplate.getJdbcOperations().query(FIND_TAG, rs -> rs.next() ? MAPPER_TAG.mapRow(rs, 1) : null, id);
+        return namedParameterJdbcTemplate.getJdbcOperations().query(GET_TAG, rs -> rs.next() ? MAPPER_TAG.mapRow(rs, 1) : null, id);
     }
 
 
@@ -66,4 +73,9 @@ public class TagRepositoryJDBC implements TagRepository {
         return getTag(createdTagId);
     }
 
+    @Override
+    public List<Tag> getTagsForCertificate(Long id) {
+
+        return namedParameterJdbcTemplate.getJdbcOperations().query(GET_TAGS_FOR_CERTIFICATE, MAPPER_TAG, id);
+    }
 }

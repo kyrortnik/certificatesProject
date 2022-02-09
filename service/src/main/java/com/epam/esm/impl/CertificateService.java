@@ -1,5 +1,9 @@
-package com.epam.esm;
+package com.epam.esm.impl;
 
+import com.epam.esm.CRUDService;
+import com.epam.esm.GiftCertificate;
+import com.epam.esm.GiftCertificateRepository;
+import com.epam.esm.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,15 +16,24 @@ import static java.util.Objects.isNull;
 public class CertificateService implements CRUDService<GiftCertificate> {
 
     @Autowired
-    private GiftCertificateRepository giftCertificateRepository;
+    private final GiftCertificateRepository giftCertificateRepository;
 
-    public CertificateService(GiftCertificateRepository giftCertificateRepository){
+    @Autowired
+    private final TagService tagService;
+
+    public CertificateService(GiftCertificateRepository giftCertificateRepository, TagService tagService) {
         this.giftCertificateRepository = giftCertificateRepository;
+        this.tagService = tagService;
     }
 
     @Override
     public GiftCertificate getEntity(Long id) {
-        return giftCertificateRepository.getCertificate(id);
+        GiftCertificate giftCertificate = giftCertificateRepository.getCertificate(id);
+        List<Tag> tags = tagService.getTagsForCertificate(id);
+        if (giftCertificate != null) {
+            giftCertificate.setTags(tags);
+        }
+        return giftCertificate;
     }
 
 
@@ -29,12 +42,18 @@ public class CertificateService implements CRUDService<GiftCertificate> {
         return giftCertificateRepository.getCertificates(order, max);
     }
 
+
     public List<GiftCertificate> getEntitiesWithParams(String order, int max, String tag, String pattern) {
-        if (!isNull(pattern)){
-            pattern = '%' + pattern + '%';
+        pattern = fromParamToMatchingPattern(pattern);
+
+        List<GiftCertificate> giftCertificates = giftCertificateRepository.getCertificatesWithParams(order, max, tag, pattern);
+        for (GiftCertificate certificate : giftCertificates) {
+            List<Tag> tags = tagService.getTagsForCertificate(certificate.getId());
+            certificate.setTags(tags);
         }
-        return giftCertificateRepository.getAllWithParams(order, max, tag, pattern);
+        return giftCertificates;
     }
+
 
     @Override
     public boolean delete(Long id) {
@@ -50,11 +69,16 @@ public class CertificateService implements CRUDService<GiftCertificate> {
 
     @Override
     public GiftCertificate create(GiftCertificate giftCertificate) {
-
         giftCertificate.setCreateDate(LocalDateTime.now());
         giftCertificate.setLastUpdateDate(LocalDateTime.now());
         return giftCertificateRepository.create(giftCertificate);
     }
 
+    private String fromParamToMatchingPattern(String pattern) {
+        if (!isNull(pattern)){
+            pattern = '%' + pattern + '%';
+        }
+        return pattern;
+    }
 
 }

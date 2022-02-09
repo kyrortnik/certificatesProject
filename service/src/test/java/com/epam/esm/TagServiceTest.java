@@ -1,10 +1,10 @@
 package com.epam.esm;
 
+import com.epam.esm.impl.TagService;
 import org.junit.jupiter.api.Test;
 
 import org.mockito.Mockito;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,6 +26,8 @@ class TagServiceTest {
 
     private final String order = "ASC";
     private final int max = 20;
+
+    private final long giftCertificateId = 1L;
 
 
     private final List<Tag> tags = Arrays.asList(
@@ -78,6 +80,16 @@ class TagServiceTest {
 
         verify(tagRepository).delete(tagId);
         assertTrue(result);
+    }
+
+    @Test
+    void testGetTagsForCertificate_positive(){
+        when(tagRepository.getTagsForCertificate(giftCertificateId)).thenReturn(tags);
+
+        List<Tag> returnTags = tagService.getTagsForCertificate(giftCertificateId);
+
+        verify(tagRepository).getTagsForCertificate(giftCertificateId);
+        assertEquals(tags,returnTags);
     }
 
 }
