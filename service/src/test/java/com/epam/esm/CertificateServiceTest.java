@@ -93,10 +93,9 @@ class CertificateServiceTest {
 
     @Test
     void testDelete_positive() {
-        boolean result;
         when(giftCertificateRepository.delete(giftCertificateId)).thenReturn(true);
 
-        result = giftCertificateService.delete(giftCertificateId);
+        boolean result = giftCertificateService.delete(giftCertificateId);
 
         verify(giftCertificateRepository).delete(giftCertificateId);
         assertTrue(result);
@@ -104,13 +103,12 @@ class CertificateServiceTest {
 
     @Test
     void testUpdate_positive() {
-        boolean result;
         GiftCertificate giftCertificate = new GiftCertificate(giftCertificateId, name, description, price, duration, createDate, lastUpdateDate, tags);
         giftCertificate.setLastUpdateDate(LocalDateTime.now());
         when(giftCertificateRepository.update(giftCertificate, giftCertificateId)).thenReturn(true);
 
 
-        result = giftCertificateService.update(giftCertificate, giftCertificateId);
+        boolean result = giftCertificateService.update(giftCertificate, giftCertificateId);
 
         verify(giftCertificateRepository).update(giftCertificate, giftCertificateId);
         assertTrue(result);

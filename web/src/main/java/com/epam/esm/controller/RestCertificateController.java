@@ -1,7 +1,7 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.CustomError;
 import com.epam.esm.GiftCertificate;
+import com.epam.esm.exception.ControllerExceptionEntity;
 import com.epam.esm.exception.EntityNotFoundException;
 import com.epam.esm.exception.NoEntitiesFoundException;
 import com.epam.esm.impl.CertificateService;
@@ -21,6 +21,7 @@ public class RestCertificateController {
 
     private static final String MAX_CERTIFICATES_IN_REQUEST = "20";
     private static final String DEFAULT_ORDER = "ASC";
+    private static long errorCodeCounter = 0;
 
     private final CertificateService service;
 
@@ -118,7 +119,7 @@ public class RestCertificateController {
         if (service.update(giftCertificate, id)) {
             responseEntity = new ResponseEntity<>(HttpStatus.OK);
         } else {
-            CustomError error = new CustomError(getErrorCode(400), "Error while updating");
+            ControllerExceptionEntity error = new ControllerExceptionEntity(getErrorCode(400), "Error while updating");
             responseEntity = new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
         }
         return responseEntity;
@@ -127,28 +128,27 @@ public class RestCertificateController {
 
     @ExceptionHandler(EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public CustomError certificateNotFound(EntityNotFoundException e) {
+    public ControllerExceptionEntity certificateNotFound(EntityNotFoundException e) {
         long certificateId = e.getEntityId();
-        return new CustomError(getErrorCode(404), "Gift Certificate [" + certificateId + "] not found");
+        return new ControllerExceptionEntity(getErrorCode(404), "Gift Certificate [" + certificateId + "] not found");
     }
 
     @ExceptionHandler(DuplicateKeyException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public CustomError duplicateKeyValues(DuplicateKeyException e) {
-        return new CustomError(getErrorCode(500), e.getCause().getMessage());
+    public ControllerExceptionEntity duplicateKeyValues(DuplicateKeyException e) {
+        return new ControllerExceptionEntity(getErrorCode(500), e.getCause().getMessage());
     }
 
     @ExceptionHandler(NoEntitiesFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public CustomError certificatesNotFound(NoEntitiesFoundException e) {
-        return new CustomError(getErrorCode(404), "No certificates are found");
+    public ControllerExceptionEntity certificatesNotFound(NoEntitiesFoundException e) {
+        return new ControllerExceptionEntity(getErrorCode(404), "No certificates are found");
     }
 
 
     private static int getErrorCode(int errorCode) {
-        long counter = 0;
-        counter++;
-        return Integer.parseInt(errorCode + String.valueOf(counter));
+        errorCodeCounter++;
+        return Integer.parseInt(errorCode + String.valueOf(errorCodeCounter));
     }
 
 }

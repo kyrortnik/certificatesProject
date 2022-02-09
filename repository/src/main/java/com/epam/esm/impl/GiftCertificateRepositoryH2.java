@@ -57,6 +57,7 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
                     "GROUP BY cert.id, cert.name, cert.description, cert.price, cert.duration, cert.create_date, cert.last_update_date\n" +
                     "ORDER BY cert.name %s LIMIT :max";
 
+
     private static final String UPDATE_CERTIFICATE = "UPDATE certificates \n" +
             "SET name = COALESCE(:name, name), description = COALESCE(:description, description), price = COALESCE(:price, price),\n" +
             "duration = COALESCE(:duration, duration), create_date = COALESCE(:create_date, create_date), last_update_date = COALESCE(:last_update_date,last_update_date) \n" +
@@ -120,7 +121,7 @@ public class GiftCertificateRepositoryH2 implements GiftCertificateRepository {
         return namedParameterJdbcTemplate.getJdbcOperations().update(DELETE_CERTIFICATE, id) > 0;
     }
 
-
+    @Transactional
     @Override
     public boolean update(GiftCertificate giftCertificate, long certificateId) {
 

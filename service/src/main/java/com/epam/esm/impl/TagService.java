@@ -46,7 +46,7 @@ public class TagService implements CRUDService<Tag> {
     }
 
 
-    public List<Tag> getTagsForCertificate(Long id){
+    public List<Tag> getTagsForCertificate(Long id) {
         return tagRepository.getTagsForCertificate(id);
     }
 

@@ -1,6 +1,6 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.CustomError;
+import com.epam.esm.exception.ControllerExceptionEntity;
 import com.epam.esm.Tag;
 import com.epam.esm.exception.EntityNotFoundException;
 import com.epam.esm.exception.NoEntitiesFoundException;
@@ -100,21 +100,21 @@ public class RestTagController {
 
     @ExceptionHandler(EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public CustomError tagNotFound(EntityNotFoundException e) {
+    public ControllerExceptionEntity tagNotFound(EntityNotFoundException e) {
         long tagId = e.getEntityId();
-        return new CustomError(getErrorCode(404), "Tag [" + tagId + "] not found");
+        return new ControllerExceptionEntity(getErrorCode(404), "Tag [" + tagId + "] not found");
     }
 
     @ExceptionHandler(NoEntitiesFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public CustomError tagsNotFound(NoEntitiesFoundException e) {
-        return new CustomError(getErrorCode(404), "No tags are found");
+    public ControllerExceptionEntity tagsNotFound(NoEntitiesFoundException e) {
+        return new ControllerExceptionEntity(getErrorCode(404), "No tags are found");
     }
 
     @ExceptionHandler(DuplicateKeyException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public CustomError duplicateKeyException(DuplicateKeyException e) {
-        return new CustomError(getErrorCode(400), "Tag with such name already exists");
+    public ControllerExceptionEntity duplicateKeyException(DuplicateKeyException e) {
+        return new ControllerExceptionEntity(getErrorCode(400), "Tag with such name already exists");
     }
 
 

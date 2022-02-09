@@ -8,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages  = "com.epam.esm" )
+@ComponentScan
 public class WebConfig implements WebMvcConfigurer {
 
     @Override

@@ -29,14 +29,17 @@ public class GiftCertificate {
 
     private List<Tag> tags = new ArrayList<>();
 
-    public GiftCertificate() {
-    }
+    public GiftCertificate() {}
 
-    public GiftCertificate(Long id, String name) {
-        this.id = id;
+    public GiftCertificate(String name, String description, Long price, Long duration,
+                           LocalDateTime createDate, LocalDateTime lastUpdateDate) {
         this.name = name;
+        this.description = description;
+        this.price = price;
+        this.duration = duration;
+        this.createDate = createDate;
+        this.lastUpdateDate = lastUpdateDate;
     }
-
 
     public GiftCertificate(Long id, String name, String description, Long price, Long duration,
                            LocalDateTime createDate, LocalDateTime lastUpdateDate) {

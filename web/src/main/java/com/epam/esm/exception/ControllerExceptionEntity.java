@@ -1,11 +1,11 @@
-package com.epam.esm;
+package com.epam.esm.exception;
 
-public class CustomError {
+public class ControllerExceptionEntity {
 
     private final String message;
     private final int code;
 
-    public CustomError(int code, String message) {
+    public ControllerExceptionEntity(int code, String message) {
         this.code = code;
         this.message = message;
     }
@@ -17,6 +17,5 @@ public class CustomError {
     public int getCode() {
         return code;
     }
-
 
 }

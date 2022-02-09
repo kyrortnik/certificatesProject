@@ -58,12 +58,8 @@ class GiftCertificateRepositoryH2IntegrationTest {
 
     //params
     private final long giftCertificateId = 1L;
-    private final GiftCertificate giftCertificate = new GiftCertificate(1L, "sea weekend", "weekend at the sea", 1500L, 90L, LocalDateTime.now(), LocalDateTime.now());
     private final String order = "ASC";
     private final int max = 20;
-    private final String emptyTag = "";
-    private final String emptyPattern = "";
-
 
     @Test
     public void testGetCertificate_integration_positive() {
@@ -81,40 +77,39 @@ class GiftCertificateRepositoryH2IntegrationTest {
 
     }
 
-    //TODO -fix bug
     @Test
-    void getAllWithParams() {
-        List<GiftCertificate> giftCertificates = giftCertificateRepositoryH2.getCertificatesWithParams(order, max, emptyTag, emptyPattern);
+    void testGetAllWithParams_integration_positive() {
+        List<GiftCertificate> giftCertificates = giftCertificateRepositoryH2.getCertificatesWithParams(order, max, null, null);
 
         assertNotNull(giftCertificates);
         assertFalse(giftCertificates.isEmpty());
     }
 
-    //TODO - fix
-    @Test
-    void delete() {
-        GiftCertificate newGiftCertificate = new GiftCertificate(5L, "name to delete");
-        giftCertificateRepositoryH2.create(newGiftCertificate);
-        boolean result = giftCertificateRepositoryH2.delete(newGiftCertificate.getId());
 
+    @Test
+    void testDelete_integration_positive() {
+        GiftCertificate giftCertificateToDelete = new GiftCertificate("name to delete", "description to delete", 1500L, 90L, LocalDateTime.now(), LocalDateTime.now());
+        GiftCertificate createdGiftCertificate = giftCertificateRepositoryH2.create(giftCertificateToDelete);
+
+        boolean result = giftCertificateRepositoryH2.delete(createdGiftCertificate.getId());
         assertTrue(result);
     }
 
     @Test
-    void update() {
-        boolean result;
-        GiftCertificate updatedGiftCertificate = new GiftCertificate(1L, "updated certificate name", "weekend at the sea", 1500L, 90L, LocalDateTime.now(), LocalDateTime.now());
+    void testUpdate_integration_positive() {
+        GiftCertificate updatedGiftCertificate = new GiftCertificate( "updated certificate name", " updated description", 1500L, 90L, LocalDateTime.now(), LocalDateTime.now());
 
-        result = giftCertificateRepositoryH2.update(updatedGiftCertificate, giftCertificateId);
+        boolean result = giftCertificateRepositoryH2.update(updatedGiftCertificate, giftCertificateId);
 
         assertTrue(result);
 
     }
 
     @Test
-    void create() {
-        GiftCertificate newGiftCertificate = new GiftCertificate(4L, "new certificate", "description", 1500L, 40L, LocalDateTime.now(), LocalDateTime.now());
+    void testCreate_integration_positive() {
+        GiftCertificate newGiftCertificate = new GiftCertificate( "new certificate", " new description", 1500L, 40L, LocalDateTime.now(), LocalDateTime.now());
         GiftCertificate createdGiftCertificate = giftCertificateRepositoryH2.create(newGiftCertificate);
+        newGiftCertificate.setId(createdGiftCertificate.getId());
 
         assertNotNull(createdGiftCertificate);
         assertEquals(newGiftCertificate, createdGiftCertificate);
