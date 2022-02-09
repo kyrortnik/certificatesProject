@@ -1,24 +1,14 @@
 package com.epam.esm.servlet;
 
-import com.epam.esm.configs.RootConfig;
-import com.epam.esm.configs.WebConfig;
+import com.epam.esm.config.RootConfig;
+import com.epam.esm.config.WebConfig;
 import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
-import javax.servlet.ServletContext;
-
 public class WebAppInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
 
-  /*  @Override
-    public void onStartup(ServletContext servletContext){
-
-        servletContext.setInitParameter(
-                "spring.profiles.active", "prod");
-    }
-*/
     @Override
-    protected Class<?>[] getRootConfigClasses() {
-        return new Class<?>[]{RootConfig.class};
+    protected Class<?>[] getRootConfigClasses() { return new Class<?>[]{RootConfig.class};
     }
 
     @Override

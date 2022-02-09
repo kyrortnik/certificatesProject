@@ -6,6 +6,7 @@ plugins {
 dependencies {
  implementation project(':service')
  implementation project(':model')
+    implementation project(':repository')
 
     // https://mvnrepository.com/artifact/commons-dbcp/commons-dbcp
     implementation 'commons-dbcp:commons-dbcp:1.4'

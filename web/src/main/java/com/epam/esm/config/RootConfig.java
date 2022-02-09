@@ -1,7 +1,6 @@
-package com.epam.esm.configs;
+package com.epam.esm.config;
 
 import org.apache.commons.dbcp.BasicDataSource;
-import org.h2.tools.Server;
 import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -10,10 +9,9 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
 
 @Configuration
-@ComponentScan(basePackages = {"beans", "com.epam.esm.beans"},
+@ComponentScan(basePackages = "com.epam.esm",
         excludeFilters = {
                 @ComponentScan.Filter(type = FilterType.ANNOTATION, value = EnableWebMvc.class)
         })
