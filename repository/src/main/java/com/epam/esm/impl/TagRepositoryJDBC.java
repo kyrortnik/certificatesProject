@@ -69,7 +69,7 @@ public class TagRepositoryJDBC implements TagRepository {
     @Transactional
     public Tag create(Tag tag) {
         BeanPropertySqlParameterSource source = new BeanPropertySqlParameterSource(tag);
-        long createdTagId = (Integer) simpleJdbcInsert.executeAndReturnKey(source);
+        long createdTagId = (Long) simpleJdbcInsert.executeAndReturnKey(source);
         return getTag(createdTagId);
     }
 
