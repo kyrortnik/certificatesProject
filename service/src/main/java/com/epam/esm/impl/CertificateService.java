@@ -6,6 +6,7 @@ import com.epam.esm.GiftCertificateRepository;
 import com.epam.esm.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,9 +45,9 @@ public class CertificateService implements CRUDService<GiftCertificate> {
 
 
     public List<GiftCertificate> getEntitiesWithParams(String order, int max, String tag, String pattern) {
-        pattern = fromParamToMatchingPattern(pattern);
+       String processedPattern = fromParamToMatchingPattern(pattern);
 
-        List<GiftCertificate> giftCertificates = giftCertificateRepository.getCertificatesWithParams(order, max, tag, pattern);
+        List<GiftCertificate> giftCertificates = giftCertificateRepository.getCertificatesWithParams(order, max, tag, processedPattern);
         for (GiftCertificate certificate : giftCertificates) {
             List<Tag> tags = tagService.getTagsForCertificate(certificate.getId());
             certificate.setTags(tags);

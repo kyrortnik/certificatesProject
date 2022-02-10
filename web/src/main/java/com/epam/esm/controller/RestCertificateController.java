@@ -16,7 +16,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "api/v1/certificates", produces = MediaType.APPLICATION_JSON_VALUE)
-
 public class RestCertificateController {
 
     private static final String MAX_CERTIFICATES_IN_REQUEST = "20";
