@@ -1,15 +1,9 @@
 plugins {
-    id 'myproject.java-conventions'
     id 'com.epam.esm.java-common-conventions'
 }
 
 dependencies {
  implementation project(':service')
  implementation project(':model')
-    implementation project(':repository')
-
-    // https://mvnrepository.com/artifact/commons-dbcp/commons-dbcp
-    implementation 'commons-dbcp:commons-dbcp:1.4'
-
 }
 

@@ -1,8 +1,5 @@
 plugins {
-    id 'myproject.java-conventions'
     id 'com.epam.esm.java-common-conventions'
 }
 
-dependencies {
-}
 

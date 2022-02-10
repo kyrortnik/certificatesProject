@@ -1,14 +1,8 @@
 plugins {
-    id 'myproject.java-conventions'
     id 'com.epam.esm.java-common-conventions'
-}
-
-repositories {
-    mavenCentral()
 }
 
 dependencies {
     implementation project(':repository')
     implementation project(':model')
-
 }

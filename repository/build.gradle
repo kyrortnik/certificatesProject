@@ -1,13 +1,8 @@
-
 plugins {
-    id 'com.epam.esm.java-library-conventions'
+    id 'com.epam.esm.java-common-conventions'
 }
 
 dependencies {
-
     implementation project(':model')
     testImplementation project(':web')
-    implementation 'org.junit.jupiter:junit-jupiter:5.7.0'
-    implementation 'junit:junit:4.13.1'
-
 }
